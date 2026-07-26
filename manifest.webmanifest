@@ -1,21 +1,27 @@
 {
+  "id": "./",
   "name": "Race Setup",
   "short_name": "Race Setup",
-  "start_url": "./",
+  "description": "Gestione assetti, cronometro multipilota e analisi dati motorsport.",
+  "lang": "it-IT",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "icon-180.png",
+      "src": "./icon-180.png",
       "sizes": "180x180",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

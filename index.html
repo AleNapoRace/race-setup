@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v0.6</title>
+<title>Race Setup v0.7</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -142,7 +142,7 @@ body.chrono-focus #chrono>.hero,body.chrono-focus #chronoSetup,body.chrono-focus
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v0.6 · crono full screen e analisi</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v0.7 · crono full screen e analisi</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -303,7 +303,7 @@ function chronoNow(){return chrono.running?(performance.now()-chrono.startAt+chr
 function buildNameFields(){let n=Number($('chronoCount')?.value||2),box=$('chronoNameFields');if(!box)return;let old=[...box.querySelectorAll('input')].map(x=>x.value);box.innerHTML=Array.from({length:n},(_,i)=>`<input id="chronoName${i}" value="${esc(old[i]||'')}" placeholder="Nome pilota ${i+1}">`).join('')}
 function prepareChrono(){let n=Number($('chronoCount').value),names=[];for(let i=0;i<n;i++){let v=$(`chronoName${i}`).value.trim();if(!v){alert(`Inserisci il nome del pilota ${i+1}`);return}names.push(v)}chrono={active:true,running:true,startAt:performance.now(),elapsed:0,raf:null,pilots:names.map(name=>({id:uid(),name,lastPass:null,laps:[],excluded:[],flash:'',paused:false}))};$('chronoSetup').classList.add('chrono-hidden');$('chronoLive').classList.remove('chrono-hidden');$('chronoAnalysis').classList.add('chrono-hidden');$('liveSessionName').textContent=$('chronoName').value||'Sessione';document.body.classList.add('chrono-focus');renderChrono();chronoTick()}
 function chronoTick(){if($('sessionClock'))$('sessionClock').textContent=chronoFormat(chronoNow());if(chrono.running)chrono.raf=requestAnimationFrame(chronoTick)}
-function tapPilot(id){if(!chrono.running)return;let p=chrono.pilots.find(x=>x.id===id);if(!p||p.paused)return;let now=chronoNow();if(p.lastPass===null){p.lastPass=now;p.flash='normal'}else{let lap=now-p.lastPass;p.lastPass=now;p.laps.push(lap);p.excluded.push(false);p.flash=lap===Math.min(...p.laps)?'best':'normal'}renderChrono();setTimeout(()=>{let q=chrono.pilots.find(x=>x.id===id);if(q){q.flash='';renderChrono()}},450)}
+function tapPilot(id){if(!chrono.running)return;if(navigator.vibrate)navigator.vibrate(18);let p=chrono.pilots.find(x=>x.id===id);if(!p||p.paused)return;let now=chronoNow();if(p.lastPass===null){p.lastPass=now;p.flash='normal'}else{let lap=now-p.lastPass;p.lastPass=now;p.laps.push(lap);p.excluded.push(false);p.flash=lap===Math.min(...p.laps)?'best':'normal'}renderChrono();setTimeout(()=>{let q=chrono.pilots.find(x=>x.id===id);if(q){q.flash='';renderChrono()}},450)}
 function pilotMenu(ev,id){ev.stopPropagation();let p=chrono.pilots.find(x=>x.id===id);let a=prompt(`${p.name}\n1 = annulla ultimo giro\n2 = pausa/riprendi`);if(a==='1'){if(p.laps.length){p.laps.pop();p.excluded.pop();p.lastPass=p.laps.reduce((x,y)=>x+y,0)}else p.lastPass=null;renderChrono()}else if(a==='2'){p.paused=!p.paused;renderChrono()}}
 function renderChrono(){let grid=$('chronoGrid');if(grid&&chrono.active){grid.dataset.count=chrono.pilots.length;grid.innerHTML=chrono.pilots.map(p=>{let last=p.laps.at(-1)||0,best=p.laps.length?Math.min(...p.laps):0,gap=last&&best?last-best:0;return `<div class="live-tile ${p.flash==='best'?'bestflash':p.flash?'flash':''}" onclick="tapPilot('${p.id}')"><button class="live-menu" onclick="pilotMenu(event,'${p.id}')">⋯</button><div class="live-name">${esc(p.name)}</div><div class="live-main"><div class="live-label">ULTIMO GIRO</div><div class="live-last">${last?lapFormat(last):(p.lastPass===null?'—':'ATTESA GIRO')}</div><div class="live-gap ${gap===0&&last?'best':''}">${last?(gap===0?'NUOVO BEST':'+'+lapFormat(gap)):'Tocca al passaggio'}</div></div><div class="live-stats"><div class="live-stat"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="live-stat"><span>Giri</span><strong>${p.laps.length}</strong></div></div></div>`}).join('')}let h=$('chronoHistory');if(h)h.innerHTML=db.chronoSessions.length?[...db.chronoSessions].reverse().map(c=>`<div class="item"><h3>${esc(c.name)}</h3><p>${c.results.map(r=>`${esc(r.name)}: ${r.laps.length} giri, best ${r.best?lapFormat(r.best):'—'}`).join(' · ')}</p></div>`).join(''):empty('Nessuna sessione salvata')}
 function validLaps(p){return p.laps.filter((_,i)=>!p.excluded[i])}
@@ -394,13 +394,13 @@ function drawLap(no){
  function line(vals,max,stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.beginPath();vals.forEach((v,i)=>{let x=pad+(w-pad*2)*i/(vals.length-1||1),y=h-pad-(h-pad*2)*(v/max);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
  let speed=data.map(x=>Number(x['Speed GPS 25Hz']||x['Speed GPS']||0)/10),rpm=data.map(x=>Number(x.RPM||0)),maxS=Math.max(...speed,1),maxR=Math.max(...rpm,1);line(speed,maxS,'#0d6efd');line(rpm,maxR,'#d19f00');ctx.fillStyle='#0d6efd';ctx.fillText(`Velocità max ${maxS.toFixed(1)} km/h`,pad,18);ctx.fillStyle='#9b7600';ctx.fillText(`RPM max ${Math.round(maxR)}`,pad+190,18)
 }
-async function loadDemo(){try{let r=await fetch('ESEMPIO_SESSIONE_ADA.zip');if(!r.ok)throw Error();let b=await r.blob();await processZip(new File([b],'ESEMPIO_SESSIONE_ADA.zip',{type:'application/zip'}))}catch(e){$('importStatus').innerHTML='<div class="warn">Il file dimostrativo non è accessibile. Avvia Race Setup tramite AVVIA_RACE_SETUP.bat, non aprendo direttamente index.html.</div>'}}
+async function loadDemo(){try{let r=await fetch('ESEMPIO_SESSIONE_ADA.zip');if(!r.ok)throw Error();let b=await r.blob();await processZip(new File([b],'ESEMPIO_SESSIONE_ADA.zip',{type:'application/zip'}))}catch(e){$('importStatus').innerHTML='<div class="warn">Il file dimostrativo non è accessibile. Controlla la connessione e aggiorna la pagina.</div>'}}
 zipInput.onchange=e=>e.target.files[0]&&processZip(e.target.files[0]);
 ['dragenter','dragover'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.add('drag')}));
 ['dragleave','drop'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.remove('drag')}));
 drop.addEventListener('drop',e=>e.dataTransfer.files[0]&&processZip(e.dataTransfer.files[0]));
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
- navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+ navigator.serviceWorker.register('service-worker.js').then(r=>r.update()).catch(()=>{});
 }
 dayDate.valueAsDate=new Date();buildNameFields();render();
 </script>
