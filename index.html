@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v1.5</title>
+<title>Race Setup v1.7</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -177,10 +177,23 @@ body.chrono-locked .live-tile{
 .form-section p{margin:0;color:var(--muted);font-size:12px}
 .preview-photo{margin-top:8px;max-width:100%;border-radius:12px;border:1px solid var(--line);display:none}
 
+
+.ocr-status{margin-top:9px;padding:10px;border-radius:10px;background:#f4f6f8;border:1px solid var(--line);font-size:13px;display:none}
+.ocr-status.running{display:block;background:#eef5ff;border-color:#b9d2ff}
+.ocr-status.success{display:block;background:#e8f8f1;border-color:#98dabc}
+.ocr-status.warning{display:block;background:#fff6dc;border-color:#e5c66c}
+.ocr-progress{height:7px;background:#dfe4e9;border-radius:999px;overflow:hidden;margin-top:7px}
+.ocr-progress>div{height:100%;width:0;background:#111;transition:width .2s}
+.ocr-result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
+.ocr-result-grid div{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px}
+.ocr-result-grid span{font-size:10px;color:var(--muted);display:block}
+@media(max-width:700px){.ocr-result-grid{grid-template-columns:1fr}}
+
 @media(max-width:700px){.analysis-grid{grid-template-columns:repeat(2,1fr)}}
 
 @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.chrono-setup,.name-fields{grid-template-columns:1fr}.pilot-tile{min-height:175px;padding:11px}.pilot-name{font-size:19px}.pilot-current{font-size:25px}.form-grid,.summary{grid-template-columns:1fr}.full{grid-column:auto}.app{padding-bottom:100px}table{font-size:12px}th,td{padding:7px 5px}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -302,7 +315,7 @@ body.chrono-locked .live-tile{
 </div></form></dialog>
 
 <dialog id="dayModal"><form method="dialog" onsubmit="saveDay(event)">
-<div class="modal-head"><strong>Nuova giornata</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('dayModal')">×</button></div>
+<div class="modal-head"><strong id="dayModalTitle">Nuova giornata</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('dayModal')">×</button></div>
 <div class="modal-body form-grid">
 <div class="full"><label>Data automatica</label><input id="dayDateDisplay" readonly></div>
 <div class="full"><label>Evento</label><select id="dayType">
@@ -314,7 +327,7 @@ body.chrono-locked .live-tile{
 <div class="actions" style="margin-top:7px"><button type="button" class="btn btn-secondary btn-small" onclick="openCircuitFromDay()">+ Crea nuovo circuito</button></div></div>
 <div class="full"><label>Obiettivo</label><input id="dayGoal" placeholder="Es. test rapporto, assetto, allenamento pilota"></div>
 <div class="full"><label>Note</label><textarea id="dayNotes"></textarea></div>
-<div class="full actions"><button class="btn btn-primary">Inizia giornata</button></div>
+<div class="full actions"><button id="daySaveBtn" class="btn btn-primary">Inizia giornata</button></div>
 </div></form></dialog>
 
 <dialog id="sessionModal"><form method="dialog" onsubmit="saveSession(event)">
@@ -322,7 +335,7 @@ body.chrono-locked .live-tile{
 <div class="modal-body form-grid">
 
 <div class="form-section"><h3>Dati generali</h3></div>
-<div class="full"><label>Giornata *</label><select id="sessionDay" required></select></div>
+<div class="full"><label>Giornata *</label><select id="sessionDay" required onchange="copyPreviousSessionData()"></select></div>
 <div><label>Tipo turno</label><select id="sessionType">
 <option>Libere</option><option>Test</option><option>Qualifica</option><option>Warm-up</option><option>Gara 1</option><option>Gara 2</option>
 </select></div>
@@ -332,7 +345,16 @@ body.chrono-locked .live-tile{
 <div><label>Corona</label><input id="sessionRearGear" type="number"></div>
 
 <div class="form-section"><h3>Dati meteo da Prisma</h3><p>Scatta o carica una foto e inserisci i valori letti.</p></div>
-<div class="full"><label>Foto Prisma</label><input id="sessionPrismaPhoto" type="file" accept="image/*" capture="environment" onchange="previewPrismaPhoto(event)"><img id="sessionPrismaPreview" class="preview-photo" alt="Anteprima Prisma"></div>
+<div class="full"><label>Foto Prisma</label>
+<input id="sessionPrismaPhoto" type="file" accept="image/*" onchange="previewPrismaPhoto(event)">
+<p class="muted" style="margin-top:6px">Su iPhone puoi scegliere una foto esistente oppure scattarne una nuova.</p>
+<img id="sessionPrismaPreview" class="preview-photo" alt="Anteprima Prisma">
+<div class="actions">
+<button type="button" id="prismaOcrBtn" class="btn btn-blue" onclick="readPrismaPhoto()">Leggi dati dalla foto</button>
+</div>
+<div id="prismaOcrStatus" class="ocr-status"></div>
+</div>
+<div id="copiedSetupNotice" class="full ok" style="display:none"></div>
 <div><label>Temperatura aria °C</label><input id="sessionAirTemp" type="number" step="0.1"></div>
 <div><label>Pressione atmosferica hPa</label><input id="sessionAtmosphericPressure" type="number" step="0.1"></div>
 <div><label>Umidità relativa RH %</label><input id="sessionHumidity" type="number" step="0.1"></div>
@@ -431,9 +453,24 @@ function openModal(id){
     if(id==='circuitModal'){circuitModalTitle.textContent='Nuovo circuito';circuitSaveBtn.textContent='Salva circuito'}
   }
   if(dialog)delete dialog.dataset.keepEdit;
-  if(id==='dayModal')setAutomaticDayDateTime();
+  if(id==='dayModal'){
+    setAutomaticDayDateTime();
+    if(!dialog.dataset.editId){
+      dayModalTitle.textContent='Nuova giornata';
+      daySaveBtn.textContent='Inizia giornata';
+    }
+  }
   if(id==='sessionModal'){pendingPrismaPhoto='';const img=$('sessionPrismaPreview');if(img){img.src='';img.style.display='none'}}
-  if(id==='sessionModal'){setAutomaticSessionTime();pendingPrismaPhoto='';const img=$('sessionPrismaPreview');if(img){img.src='';img.style.display='none'}}
+  if(id==='sessionModal'){
+    setAutomaticSessionTime();
+    pendingPrismaPhoto='';
+    const img=$('sessionPrismaPreview');
+    if(img){img.src='';img.style.display='none'}
+    const notice=$('copiedSetupNotice');
+    if(notice)notice.style.display='none';
+    const ocrStatus=$('prismaOcrStatus');
+    if(ocrStatus){ocrStatus.className='ocr-status';ocrStatus.innerHTML='';}
+  }
   if(dialog && !dialog.open)dialog.showModal();
 }
 function closeModal(id){
@@ -445,7 +482,14 @@ function closeModal(id){
   const form=dialog.querySelector('form');
   if(form)form.reset();
   if(id==='dayModal')setAutomaticDayDateTime();
-  if(id==='sessionModal'){setAutomaticSessionTime();pendingPrismaPhoto='';const img=$('sessionPrismaPreview');if(img){img.src='';img.style.display='none'}}
+  if(id==='sessionModal'){
+    setAutomaticSessionTime();
+    pendingPrismaPhoto='';
+    const img=$('sessionPrismaPreview');
+    if(img){img.src='';img.style.display='none'}
+    const notice=$('copiedSetupNotice');
+    if(notice)notice.style.display='none';
+  }
   delete dialog.dataset.editId;
   if(id==='riderModal'){riderModalTitle.textContent='Nuovo pilota';riderSaveBtn.textContent='Salva pilota'}
   if(id==='bikeModal'){bikeModalTitle.textContent='Nuova moto';bikeSaveBtn.textContent='Salva moto'}
@@ -475,6 +519,163 @@ function setAutomaticSessionTime(){
   const now=new Date();
   if($('sessionTimeDisplay'))$('sessionTimeDisplay').value=now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
 }
+
+function normalizeOcrNumber(value){
+  if(value===undefined||value===null)return '';
+  let s=String(value)
+    .replace(/[Oo]/g,'0')
+    .replace(/[Il|]/g,'1')
+    .replace(/,/g,'.')
+    .replace(/[^\d.\-]/g,'');
+  const parts=s.split('.');
+  if(parts.length>2)s=parts.shift()+'.'+parts.join('');
+  const n=Number(s);
+  return Number.isFinite(n)?n:'';
+}
+
+function findNumberNearLabel(text,labelPatterns){
+  const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+    if(labelPatterns.some(p=>p.test(line))){
+      const same=line.match(/[-+]?\d+(?:[.,]\d+)?/g);
+      if(same?.length)return normalizeOcrNumber(same[same.length-1]);
+      for(let j=i+1;j<=Math.min(i+2,lines.length-1);j++){
+        const next=lines[j].match(/[-+]?\d+(?:[.,]\d+)?/g);
+        if(next?.length)return normalizeOcrNumber(next[0]);
+      }
+    }
+  }
+  return '';
+}
+
+function parsePrismaOcr(text){
+  const cleaned=text
+    .replace(/°/g,'')
+    .replace(/\s+/g,' ')
+    .replace(/AIR\s*DENSITY/ig,'AIR DENSITY');
+
+  let result={
+    airTemp:findNumberNearLabel(text,[/\bTEMP\b/i,/TEMPERAT/i]),
+    atmosphericPressure:findNumberNearLabel(text,[/\bPRES\b/i,/PRESS/i]),
+    humidity:findNumberNearLabel(text,[/\bRH\b/i,/HUMID/i]),
+    airDensity:findNumberNearLabel(text,[/AIR\s*DENS/i,/DENSITY/i]),
+    altitude:findNumberNearLabel(text,[/ALTITUDE/i,/\bALT\b/i])
+  };
+
+  // Fallback tailored to the Prisma five-row display.
+  const nums=(text.match(/[-+]?\d+(?:[.,]\d+)?/g)||[])
+    .map(normalizeOcrNumber)
+    .filter(v=>v!=='');
+
+  const plausible={
+    airTemp:nums.find(v=>v>=-20&&v<=70),
+    atmosphericPressure:nums.find(v=>v>=800&&v<=1100),
+    humidity:nums.find(v=>v>=0&&v<=100 && v!==result.airTemp),
+    airDensity:nums.find(v=>v>=0.7&&v<=1.5),
+    altitude:nums.find(v=>v>=-500&&v<=5000 && v!==result.atmosphericPressure)
+  };
+
+  Object.keys(result).forEach(k=>{
+    if(result[k]==='')result[k]=plausible[k]??'';
+  });
+
+  // Reject clearly impossible readings.
+  if(result.airTemp!=='' && (result.airTemp < -30 || result.airTemp > 80))result.airTemp='';
+  if(result.atmosphericPressure!=='' && (result.atmosphericPressure < 700 || result.atmosphericPressure > 1200))result.atmosphericPressure='';
+  if(result.humidity!=='' && (result.humidity < 0 || result.humidity > 100))result.humidity='';
+  if(result.airDensity!=='' && (result.airDensity < 0.5 || result.airDensity > 1.8))result.airDensity='';
+  if(result.altitude!=='' && (result.altitude < -1000 || result.altitude > 10000))result.altitude='';
+
+  return result;
+}
+
+async function preprocessPrismaImage(dataUrl){
+  const img=new Image();
+  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=dataUrl});
+  const scale=Math.max(1,Math.min(3,1800/img.width));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.round(img.width*scale);
+  canvas.height=Math.round(img.height*scale);
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const d=image.data;
+  for(let i=0;i<d.length;i+=4){
+    const gray=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    // Strong contrast helps with the Prisma LCD.
+    const value=gray>145?255:0;
+    d[i]=d[i+1]=d[i+2]=value;
+  }
+  ctx.putImageData(image,0,0);
+  return canvas;
+}
+
+async function readPrismaPhoto(){
+  const status=$('prismaOcrStatus');
+  const button=$('prismaOcrBtn');
+  if(!pendingPrismaPhoto){
+    status.className='ocr-status warning';
+    status.textContent='Prima scegli o scatta una foto del display Prisma.';
+    return;
+  }
+  if(typeof Tesseract==='undefined'){
+    status.className='ocr-status warning';
+    status.textContent='Il lettore OCR non è disponibile. Controlla la connessione Internet e aggiorna la pagina.';
+    return;
+  }
+
+  button.disabled=true;
+  status.className='ocr-status running';
+  status.innerHTML='Preparazione immagine…<div class="ocr-progress"><div id="ocrProgressBar"></div></div>';
+
+  let worker;
+  try{
+    const canvas=await preprocessPrismaImage(pendingPrismaPhoto);
+    worker=await Tesseract.createWorker('eng',1,{
+      logger:m=>{
+        if(m.status==='recognizing text'){
+          const pct=Math.round((m.progress||0)*100);
+          const bar=$('ocrProgressBar');
+          if(bar)bar.style.width=pct+'%';
+          status.firstChild.textContent=`Lettura display… ${pct}%`;
+        }
+      }
+    });
+    await worker.setParameters({
+      tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-%° ',
+      preserve_interword_spaces:'1'
+    });
+    const {data}=await worker.recognize(canvas);
+    const values=parsePrismaOcr(data.text||'');
+
+    if(values.airTemp!=='')sessionAirTemp.value=values.airTemp;
+    if(values.atmosphericPressure!=='')sessionAtmosphericPressure.value=values.atmosphericPressure;
+    if(values.humidity!=='')sessionHumidity.value=values.humidity;
+    if(values.airDensity!=='')sessionAirDensity.value=values.airDensity;
+    if(values.altitude!=='')sessionAltitude.value=values.altitude;
+
+    const found=Object.values(values).filter(v=>v!=='').length;
+    status.className=found>=4?'ocr-status success':'ocr-status warning';
+    status.innerHTML=`<strong>${found>=4?'Dati letti dalla foto.':'Lettura parziale: controlla i valori.'}</strong>
+      <div class="ocr-result-grid">
+        <div><span>Temperatura aria</span>${values.airTemp!==''?values.airTemp+' °C':'Non rilevata'}</div>
+        <div><span>Pressione</span>${values.atmosphericPressure!==''?values.atmosphericPressure+' hPa':'Non rilevata'}</div>
+        <div><span>Umidità RH</span>${values.humidity!==''?values.humidity+' %':'Non rilevata'}</div>
+        <div><span>Densità aria</span>${values.airDensity!==''?values.airDensity:'Non rilevata'}</div>
+        <div><span>Altitudine</span>${values.altitude!==''?values.altitude+' m':'Non rilevata'}</div>
+      </div>
+      <p style="margin:8px 0 0">I campi restano modificabili. Verifica sempre i valori prima di salvare.</p>`;
+  }catch(error){
+    console.error(error);
+    status.className='ocr-status warning';
+    status.textContent='Non sono riuscito a leggere il display. Prova con una foto più frontale, nitida e senza riflessi.';
+  }finally{
+    if(worker)await worker.terminate();
+    button.disabled=false;
+  }
+}
+
 function previewPrismaPhoto(event){
   const file=event.target.files?.[0];
   if(!file)return;
@@ -554,15 +755,70 @@ function openCircuitFromDay(){
   openModal('circuitModal');
   circuitModal.dataset.returnToDay='1';
 }
+
+function editDay(id){
+  const d=get('days',id);if(!d)return;
+  dayModal.dataset.keepEdit='1';
+  dayModal.dataset.editId=id;
+  openModal('dayModal');
+  dayModal.dataset.editId=id;
+  dayModalTitle.textContent='Modifica giornata';
+  daySaveBtn.textContent='Salva modifiche';
+  dayDateDisplay.value=fmtDate(d.date);
+  dayType.value=d.type||'Allenamento';
+  dayRider.value=d.riderId||'';
+  dayBike.value=d.bikeId||'';
+  dayCircuit.value=d.circuitId||'';
+  dayGoal.value=d.goal||'';
+  dayNotes.value=d.notes||'';
+}
+
+const previousSetupFields=[
+  'frontGear','rearGear','pilotJet','mainJet','needleClip','airScrew',
+  'tireBrand','tireType','tireCompound',
+  'frontWarmerTemp','frontWarmerPressure','rearWarmerTemp','rearWarmerPressure',
+  'forkHeight','sagF','forkPreload','forkCompression','forkRebound',
+  'sagR','shockSpacer','shockCompression','shockRebound'
+];
+
+function copyPreviousSessionData(){
+  if(sessionModal.dataset.editId)return;
+  const dayId=$('sessionDay')?.value;
+  const notice=$('copiedSetupNotice');
+  if(notice)notice.style.display='none';
+  if(!dayId)return;
+
+  const previous=db.sessions
+    .filter(s=>s.dayId===dayId && !s.isDraft)
+    .sort((a,b)=>String(b.createdAt||b.time||'').localeCompare(String(a.createdAt||a.time||'')))[0];
+
+  if(!previous)return;
+
+  previousSetupFields.forEach(field=>{
+    const elementId='session'+field.charAt(0).toUpperCase()+field.slice(1);
+    const input=$(elementId);
+    if(input && previous[field]!==undefined && previous[field]!==null)input.value=previous[field];
+  });
+
+  const numbers=db.sessions.filter(s=>s.dayId===dayId).map(s=>Number(s.number)||0);
+  sessionNumber.value=Math.max(0,...numbers)+1;
+
+  if(notice){
+    notice.innerHTML=`Dati di assetto, gomme e termocoperte copiati dal turno precedente: <strong>${esc(previous.type)} ${esc(previous.number||'')}</strong>. Tutti i valori restano modificabili.`;
+    notice.style.display='block';
+  }
+}
 function saveDay(e){
   e.preventDefault();
   const now=new Date();
   const circuit=get('circuits',dayCircuit.value);
-  db.days.push({
-    id:uid(),
-    date:now.toISOString().slice(0,10),
-    time:now.toTimeString().slice(0,5),
-    createdAt:now.toISOString(),
+  const editId=dayModal.dataset.editId||'';
+  const existing=editId?get('days',editId):null;
+  const record={
+    id:editId||uid(),
+    date:existing?.date||now.toISOString().slice(0,10),
+    time:existing?.time||now.toTimeString().slice(0,5),
+    createdAt:existing?.createdAt||now.toISOString(),
     type:dayType.value,
     riderId:dayRider.value,
     bikeId:dayBike.value,
@@ -571,8 +827,18 @@ function saveDay(e){
     layout:circuit?.layout||'',
     goal:dayGoal.value,
     notes:dayNotes.value
-  });
-  save();dayModal.close();resetLater(e.target);setAutomaticDayDateTime();
+  };
+  if(editId){
+    const idx=db.days.findIndex(x=>x.id===editId);
+    if(idx>=0)db.days[idx]=record;
+  }else{
+    db.days.push(record);
+  }
+  delete dayModal.dataset.editId;
+  save();
+  dayModal.close();
+  resetLater(e.target);
+  setAutomaticDayDateTime();
 }
 
 function editSession(id){
@@ -606,6 +872,11 @@ function editSession(id){
  sessionLapCount.value=s.laps||0;
  sessionDataSource.value=s.source||'Manuale';
  sessionFeedback.value=s.feedback||'';
+ pendingPrismaPhoto=s.prismaPhoto||'';
+ if(pendingPrismaPhoto){
+   sessionPrismaPreview.src=pendingPrismaPhoto;
+   sessionPrismaPreview.style.display='block';
+ }
 }
 
 function saveSession(e){
@@ -623,7 +894,7 @@ function saveSession(e){
     frontGear:sessionFrontGear.value,
     rearGear:sessionRearGear.value,
 
-    prismaPhoto:pendingPrismaPhoto,
+    prismaPhoto:pendingPrismaPhoto||(editId?(get('sessions',editId)?.prismaPhoto||''):''),
     airTemp:sessionAirTemp.value,
     trackTemp:sessionTrackTemp.value,
     humidity:sessionHumidity.value,
@@ -730,7 +1001,7 @@ fillSelects()
 }
 function dayCard(d,compact=false){
 let r=get('riders',d.riderId),b=get('bikes',d.bikeId),ss=db.sessions.filter(s=>s.dayId===d.id);
-return `<div class="${compact?'item':'card'}"><div class="row"><div><h3>${fmtDate(d.date)} · ${esc(dayTrackName(d))}</h3><p>${esc(r?.name||'Pilota')} · ${esc(b?bikeLabel(b):'Moto')} · ${esc(d.type)}</p></div><span class="badge gray">${ss.length} turni</span></div>${compact?'':`<div class="list" style="margin-top:10px">${ss.length?ss.map(sessionCard).join(''):empty('Nessun turno')}</div>`}</div>`
+return `<div class="${compact?'item':'card'}"><div class="row"><div><h3>${fmtDate(d.date)} · ${esc(dayTrackName(d))}</h3><p>${esc(r?.name||'Pilota')} · ${esc(b?bikeLabel(b):'Moto')} · ${esc(d.type)}</p></div><div class="actions" style="margin-top:0"><span class="badge gray">${ss.length} turni</span>${compact?'':`<button class="btn btn-secondary btn-small" onclick="editDay('${d.id}')">Modifica</button>`}</div></div>${compact?'':`<div class="list" style="margin-top:10px">${ss.length?ss.map(sessionCard).join(''):empty('Nessun turno')}</div>`}</div>`
 }
 function sessionCard(s){
 let best=s.officialBest||s.manualBest||'—';

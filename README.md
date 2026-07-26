@@ -1,17 +1,15 @@
-# Race Setup v1.5
+# Race Setup v1.7
 
-## Nickname moto
-Ogni moto può avere un nome riconoscibile, per esempio:
+## Lettura automatica Prisma
+Dopo aver scelto o scattato la foto del display Prisma, il pulsante
+**Leggi dati dalla foto** utilizza OCR nel browser e prova a compilare:
 
-- Race
-- Talenti
-- Allenamento
-- Muletto
+- temperatura aria;
+- pressione atmosferica;
+- umidità relativa RH;
+- densità aria;
+- altitudine.
 
-Il nickname viene mostrato:
-- nell’elenco delle moto;
-- nella scelta della moto nella Giornata;
-- nei riepiloghi delle giornate;
-- senza modificare i collegamenti già esistenti.
-
-Le moto create nelle versioni precedenti restano disponibili e possono essere modificate per aggiungere il nickname.
+I dati riconosciuti restano sempre modificabili e devono essere controllati
+prima del salvataggio. La prima lettura richiede una connessione Internet
+per caricare il motore OCR Tesseract.js.
