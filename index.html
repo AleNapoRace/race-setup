@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v1.3</title>
+<title>Race Setup v1.4</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -185,7 +185,7 @@ body.chrono-locked .live-tile{
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.3 · import Alfano e dati Prisma</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.4 · modifica anagrafiche</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -280,14 +280,14 @@ body.chrono-locked .live-tile{
 <button class="nav-btn" data-screen="tires"><span>◎</span>Gomme</button>
 </div></nav>
 
-<dialog id="riderModal"><form method="dialog" onsubmit="saveRider(event)"><div class="modal-head"><strong>Nuovo pilota</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('riderModal')">×</button></div><div class="modal-body form-grid">
-<div class="full"><label>Nome e cognome *</label><input id="riderName" required></div><div><label>Numero gara</label><input id="riderNumber" type="number"></div><div><label>Categoria</label><input id="riderCategory"></div><div><label>Peso (kg)</label><input id="riderWeight" type="number" step=".1"></div><div><label>Peso pronto gara (kg)</label><input id="riderRaceWeight" type="number" step=".1"></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
+<dialog id="riderModal"><form method="dialog" onsubmit="saveRider(event)"><div class="modal-head"><strong id="riderModalTitle">Nuovo pilota</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('riderModal')">×</button></div><div class="modal-body form-grid">
+<div class="full"><label>Nome e cognome *</label><input id="riderName" required></div><div><label>Numero gara</label><input id="riderNumber" type="number"></div><div><label>Categoria</label><input id="riderCategory"></div><div><label>Peso (kg)</label><input id="riderWeight" type="number" step=".1"></div><div><label>Peso pronto gara (kg)</label><input id="riderRaceWeight" type="number" step=".1"></div><div class="full actions"><button id="riderSaveBtn" class="btn btn-primary">Salva pilota</button></div></div></form></dialog>
 
-<dialog id="bikeModal"><form method="dialog" onsubmit="saveBike(event)"><div class="modal-head"><strong>Nuova moto</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('bikeModal')">×</button></div><div class="modal-body form-grid">
-<div><label>Marca *</label><input id="bikeBrand" required></div><div><label>Modello *</label><input id="bikeModel" required></div><div><label>Cilindrata *</label><input id="bikeCc" required type="number"></div><div><label>Anno</label><input id="bikeYear" type="number"></div><div><label>Categoria</label><input id="bikeCategory"></div><div><label>Motore</label><input id="bikeEngine"></div><div><label>Tipo motore</label><select id="bikeStroke"><option>4T</option><option>2T</option><option>Elettrico</option></select></div><div><label>Ruote</label><input id="bikeWheels" placeholder='10"'></div><div class="full"><label>Configurazione/note</label><textarea id="bikeNotes"></textarea></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
+<dialog id="bikeModal"><form method="dialog" onsubmit="saveBike(event)"><div class="modal-head"><strong id="bikeModalTitle">Nuova moto</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('bikeModal')">×</button></div><div class="modal-body form-grid">
+<div><label>Marca *</label><input id="bikeBrand" required></div><div><label>Modello *</label><input id="bikeModel" required></div><div><label>Cilindrata *</label><input id="bikeCc" required type="number"></div><div><label>Anno</label><input id="bikeYear" type="number"></div><div><label>Categoria</label><input id="bikeCategory"></div><div><label>Motore</label><input id="bikeEngine"></div><div><label>Tipo motore</label><select id="bikeStroke"><option>4T</option><option>2T</option><option>Elettrico</option></select></div><div><label>Ruote</label><input id="bikeWheels" placeholder='10"'></div><div class="full"><label>Configurazione/note</label><textarea id="bikeNotes"></textarea></div><div class="full actions"><button id="bikeSaveBtn" class="btn btn-primary">Salva moto</button></div></div></form></dialog>
 
 <dialog id="circuitModal"><form method="dialog" onsubmit="saveCircuit(event)">
-<div class="modal-head"><strong>Nuovo circuito</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('circuitModal')">×</button></div>
+<div class="modal-head"><strong id="circuitModalTitle">Nuovo circuito</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('circuitModal')">×</button></div>
 <div class="modal-body form-grid">
 <div><label>Nome circuito *</label><input id="circuitName" required placeholder="Es. Circuito di Viterbo"></div>
 <div><label>Località</label><input id="circuitLocation" placeholder="Es. Viterbo"></div>
@@ -297,7 +297,7 @@ body.chrono-locked .live-tile{
 <div><label>Numero curve</label><input id="circuitCorners" type="number"></div>
 <div><label>Tipo</label><select id="circuitType"><option value="">Non indicato</option><option>Minimoto</option><option>MiniGP</option><option>Pit Bike</option><option>Kart</option><option>Motard</option><option>Altro</option></select></div>
 <div class="full"><label>Note</label><textarea id="circuitNotes"></textarea></div>
-<div class="full actions"><button class="btn btn-primary">Salva circuito</button></div>
+<div class="full actions"><button id="circuitSaveBtn" class="btn btn-primary">Salva circuito</button></div>
 </div></form></dialog>
 
 <dialog id="dayModal"><form method="dialog" onsubmit="saveDay(event)">
@@ -420,6 +420,15 @@ document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>go(b.dataset.scre
 function openModal(id){
   fillSelects();
   const dialog=$(id);
+  if(dialog && !dialog.dataset.keepEdit){
+    delete dialog.dataset.editId;
+    const form=dialog.querySelector('form');
+    if(form)form.reset();
+    if(id==='riderModal'){riderModalTitle.textContent='Nuovo pilota';riderSaveBtn.textContent='Salva pilota'}
+    if(id==='bikeModal'){bikeModalTitle.textContent='Nuova moto';bikeSaveBtn.textContent='Salva moto'}
+    if(id==='circuitModal'){circuitModalTitle.textContent='Nuovo circuito';circuitSaveBtn.textContent='Salva circuito'}
+  }
+  if(dialog)delete dialog.dataset.keepEdit;
   if(id==='dayModal')setAutomaticDayDateTime();
   if(id==='sessionModal'){pendingPrismaPhoto='';const img=$('sessionPrismaPreview');if(img){img.src='';img.style.display='none'}}
   if(id==='sessionModal'){setAutomaticSessionTime();pendingPrismaPhoto='';const img=$('sessionPrismaPreview');if(img){img.src='';img.style.display='none'}}
@@ -435,6 +444,10 @@ function closeModal(id){
   if(form)form.reset();
   if(id==='dayModal')setAutomaticDayDateTime();
   if(id==='sessionModal'){setAutomaticSessionTime();pendingPrismaPhoto='';const img=$('sessionPrismaPreview');if(img){img.src='';img.style.display='none'}}
+  delete dialog.dataset.editId;
+  if(id==='riderModal'){riderModalTitle.textContent='Nuovo pilota';riderSaveBtn.textContent='Salva pilota'}
+  if(id==='bikeModal'){bikeModalTitle.textContent='Nuova moto';bikeSaveBtn.textContent='Salva moto'}
+  if(id==='circuitModal'){circuitModalTitle.textContent='Nuovo circuito';circuitSaveBtn.textContent='Salva circuito'}
   fillSelects();
   if(returnToDay)setTimeout(()=>openModal('dayModal'),50);
 }
@@ -471,16 +484,53 @@ function setAutomaticDayDateTime(){
   const now=new Date();
   if($('dayDateDisplay'))$('dayDateDisplay').value=now.toLocaleDateString('it-IT');
 }
-function del(type,id){if(confirm('Eliminare questo elemento?')){db[type]=db[type].filter(x=>x.id!==id);save()}}
+function del(type,id){
+  if(type==='riders'&&db.days.some(d=>d.riderId===id)){alert('Questo pilota è collegato a una giornata: puoi modificarlo ma non eliminarlo.');return}
+  if(type==='bikes'&&db.days.some(d=>d.bikeId===id)){alert('Questa moto è collegata a una giornata: puoi modificarla ma non eliminarla.');return}
+  if(confirm('Eliminare questo elemento?')){db[type]=db[type].filter(x=>x.id!==id);save()}
+}
 
-function saveRider(e){e.preventDefault();db.riders.push({id:uid(),name:riderName.value,number:riderNumber.value,category:riderCategory.value,weight:riderWeight.value,raceWeight:riderRaceWeight.value});save();riderModal.close();resetLater(e.target)}
-function saveBike(e){e.preventDefault();db.bikes.push({id:uid(),brand:bikeBrand.value,model:bikeModel.value,cc:bikeCc.value,year:bikeYear.value,category:bikeCategory.value,engine:bikeEngine.value,stroke:bikeStroke.value,wheels:bikeWheels.value,notes:bikeNotes.value});save();bikeModal.close();resetLater(e.target)}
+function editRider(id){
+  const r=get('riders',id);if(!r)return;
+  riderModal.dataset.keepEdit='1';openModal('riderModal');riderModal.dataset.editId=id;
+  riderModalTitle.textContent='Modifica pilota';riderSaveBtn.textContent='Salva modifiche';
+  riderName.value=r.name||'';riderNumber.value=r.number||'';riderCategory.value=r.category||'';riderWeight.value=r.weight||'';riderRaceWeight.value=r.raceWeight||'';
+}
+function editBike(id){
+  const b=get('bikes',id);if(!b)return;
+  bikeModal.dataset.keepEdit='1';openModal('bikeModal');bikeModal.dataset.editId=id;
+  bikeModalTitle.textContent='Modifica moto';bikeSaveBtn.textContent='Salva modifiche';
+  bikeBrand.value=b.brand||'';bikeModel.value=b.model||'';bikeCc.value=b.cc||'';bikeYear.value=b.year||'';bikeCategory.value=b.category||'';bikeEngine.value=b.engine||'';bikeStroke.value=b.stroke||'';bikeWheels.value=b.wheels||'';bikeNotes.value=b.notes||'';
+}
+function editCircuit(id){
+  const c=get('circuits',id);if(!c)return;
+  circuitModal.dataset.keepEdit='1';openModal('circuitModal');circuitModal.dataset.editId=id;
+  circuitModalTitle.textContent='Modifica circuito';circuitSaveBtn.textContent='Salva modifiche';
+  circuitName.value=c.name||'';circuitLocation.value=c.location||'';circuitLayout.value=c.layout||'';circuitLength.value=c.length||'';circuitDirection.value=c.direction||'';circuitCorners.value=c.corners||'';circuitType.value=c.type||'';circuitNotes.value=c.notes||'';
+}
+
+function saveRider(e){
+  e.preventDefault();
+  const editId=riderModal.dataset.editId||'';
+  const record={id:editId||uid(),name:riderName.value.trim(),number:riderNumber.value,category:riderCategory.value,weight:riderWeight.value,raceWeight:riderRaceWeight.value};
+  if(editId){const i=db.riders.findIndex(x=>x.id===editId);if(i>=0)db.riders[i]=record}else db.riders.push(record);
+  delete riderModal.dataset.editId;save();riderModal.close();resetLater(e.target);
+}
+function saveBike(e){
+  e.preventDefault();
+  const editId=bikeModal.dataset.editId||'';
+  const record={id:editId||uid(),brand:bikeBrand.value.trim(),model:bikeModel.value.trim(),cc:bikeCc.value,year:bikeYear.value,category:bikeCategory.value,engine:bikeEngine.value,stroke:bikeStroke.value,wheels:bikeWheels.value,notes:bikeNotes.value};
+  if(editId){const i=db.bikes.findIndex(x=>x.id===editId);if(i>=0)db.bikes[i]=record}else db.bikes.push(record);
+  delete bikeModal.dataset.editId;save();bikeModal.close();resetLater(e.target);
+}
 function saveCircuit(e){
   e.preventDefault();
-  const c={id:uid(),name:circuitName.value.trim(),location:circuitLocation.value.trim(),layout:circuitLayout.value.trim(),length:circuitLength.value,direction:circuitDirection.value,corners:circuitCorners.value,type:circuitType.value,notes:circuitNotes.value.trim()};
-  db.circuits.push(c);
+  const editId=circuitModal.dataset.editId||'';
+  const c={id:editId||uid(),name:circuitName.value.trim(),location:circuitLocation.value.trim(),layout:circuitLayout.value.trim(),length:circuitLength.value,direction:circuitDirection.value,corners:circuitCorners.value,type:circuitType.value,notes:circuitNotes.value.trim()};
+  if(editId){const i=db.circuits.findIndex(x=>x.id===editId);if(i>=0)db.circuits[i]=c}else db.circuits.push(c);
   const returnToDay=circuitModal.dataset.returnToDay==='1';
   delete circuitModal.dataset.returnToDay;
+  delete circuitModal.dataset.editId;
   save();
   circuitModal.close();
   resetLater(e.target);
@@ -661,9 +711,9 @@ function deleteCircuit(id){
 function tireLaps(t){return Number(t.initialLaps||0)+db.sessions.filter(s=>s.tireF===t.id||s.tireR===t.id).reduce((a,s)=>a+Number(s.laps||0),0)}
 function render(){
 $('stats').innerHTML=[['Piloti',db.riders.length],['Moto',db.bikes.length],['Circuiti',db.circuits.length],['Turni',db.sessions.length]].map(x=>`<div class="stat"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');
-$('riders').innerHTML=db.riders.length?db.riders.map(r=>`<div class="item"><div class="row"><div><h3>${esc(r.name)}</h3><p>#${esc(r.number||'—')} · ${esc(r.category||'')}</p></div><button class="btn btn-danger btn-small" onclick="del('riders','${r.id}')">Elimina</button></div></div>`).join(''):empty('Nessun pilota');
-$('bikes').innerHTML=db.bikes.length?db.bikes.map(b=>`<div class="item"><div class="row"><div><h3>${esc(b.brand)} ${esc(b.model)} <span class="badge">${esc(b.cc)} cc</span></h3><p>${esc(b.stroke)} · ${esc(b.category||'')} · ${esc(b.wheels||'')}</p><p>${esc(b.notes||'')}</p></div><button class="btn btn-danger btn-small" onclick="del('bikes','${b.id}')">Elimina</button></div></div>`).join(''):empty('Nessuna moto');
-$('circuitsList').innerHTML=db.circuits.length?db.circuits.map(c=>`<div class="item"><div class="row"><div><h3>${esc(c.name)} ${c.layout?'<span class="badge">'+esc(c.layout)+'</span>':''}</h3><p>${esc(c.location||'Località non indicata')}${c.length?' · '+esc(c.length)+' m':''}${c.direction?' · '+esc(c.direction):''}</p><p>${esc(c.type||'')}${c.corners?' · '+esc(c.corners)+' curve':''}</p><p>${esc(c.notes||'')}</p></div><button class="btn btn-danger btn-small" onclick="deleteCircuit('${c.id}')">Elimina</button></div></div>`).join(''):empty('Nessun circuito');
+$('riders').innerHTML=db.riders.length?db.riders.map(r=>`<div class="item"><div class="row"><div><h3>${esc(r.name)}</h3><p>#${esc(r.number||'—')} · ${esc(r.category||'')}</p></div><div class="actions" style="margin-top:0"><button class="btn btn-secondary btn-small" onclick="editRider('${r.id}')">Modifica</button><button class="btn btn-danger btn-small" onclick="del('riders','${r.id}')">Elimina</button></div></div></div>`).join(''):empty('Nessun pilota');
+$('bikes').innerHTML=db.bikes.length?db.bikes.map(b=>`<div class="item"><div class="row"><div><h3>${esc(b.brand)} ${esc(b.model)} <span class="badge">${esc(b.cc)} cc</span></h3><p>${esc(b.stroke)} · ${esc(b.category||'')} · ${esc(b.wheels||'')}</p><p>${esc(b.notes||'')}</p></div><div class="actions" style="margin-top:0"><button class="btn btn-secondary btn-small" onclick="editBike('${b.id}')">Modifica</button><button class="btn btn-danger btn-small" onclick="del('bikes','${b.id}')">Elimina</button></div></div></div>`).join(''):empty('Nessuna moto');
+$('circuitsList').innerHTML=db.circuits.length?db.circuits.map(c=>`<div class="item"><div class="row"><div><h3>${esc(c.name)} ${c.layout?'<span class="badge">'+esc(c.layout)+'</span>':''}</h3><p>${esc(c.location||'Località non indicata')}${c.length?' · '+esc(c.length)+' m':''}${c.direction?' · '+esc(c.direction):''}</p><p>${esc(c.type||'')}${c.corners?' · '+esc(c.corners)+' curve':''}</p><p>${esc(c.notes||'')}</p></div><div class="actions" style="margin-top:0"><button class="btn btn-secondary btn-small" onclick="editCircuit('${c.id}')">Modifica</button><button class="btn btn-danger btn-small" onclick="deleteCircuit('${c.id}')">Elimina</button></div></div></div>`).join(''):empty('Nessun circuito');
 $('tiresList').innerHTML=db.tires.length?db.tires.map(t=>`<div class="item"><div class="row"><div><h3>${esc(t.code)} · ${esc(t.position)}</h3><p>${esc(t.brand)} ${esc(t.model||'')} · ${esc(t.size||'')}</p><p><strong>${tireLaps(t)} giri totali</strong></p></div><button class="btn btn-danger btn-small" onclick="del('tires','${t.id}')">Elimina</button></div></div>`).join(''):empty('Nessuna gomma');
 let sorted=[...db.days].sort((a,b)=>b.date.localeCompare(a.date));
 $('daysList').innerHTML=sorted.length?sorted.map(d=>dayCard(d)).join(''):empty('Nessuna giornata');
