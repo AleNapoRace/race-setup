@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Race Setup">
+<title>Race Setup v0.5</title>
+<style>
+:root{
+  --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
+  --accent:#f2c300;--accent-dark:#c49a00;--blue:#0d6efd;--green:#16885f;
+  --red:#cf3f43;--soft:#f8fafb;--radius:18px;--shadow:0 6px 22px rgba(20,30,45,.08)
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}
+.app{max-width:1050px;margin:auto;min-height:100vh;padding-bottom:92px}
+header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:14px 16px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{display:flex;align-items:center;gap:11px}
+.mark{width:43px;height:43px;border:2px solid #111;border-radius:13px;display:grid;place-items:center;font-weight:900;background:var(--accent)}
+h1{font-size:20px;margin:0}.version{font-size:12px;color:var(--muted)}
+main{padding:16px}
+.screen{display:none}.screen.active{display:block}
+.hero,.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.hero{background:linear-gradient(135deg,#fff,#fff9d8)}
+.hero h2,.section-title{margin:0 0 6px}.hero p,.muted{color:var(--muted);margin:0}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+.btn{border:0;border-radius:13px;padding:12px 14px;font-weight:800;cursor:pointer}
+.btn-primary{background:var(--accent);color:#111}
+.btn-secondary{background:#edf1f4;color:#15191f}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-danger{background:#fae8e8;color:var(--red)}
+.btn-small{padding:8px 10px;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px;box-shadow:var(--shadow)}
+.stat strong{font-size:25px;display:block}.stat span{font-size:12px;color:var(--muted)}
+.list{display:grid;gap:10px}
+.item{background:var(--soft);border:1px solid var(--line);border-radius:15px;padding:13px}
+.item h3{margin:0 0 4px;font-size:16px}.item p{margin:3px 0;color:var(--muted);font-size:13px}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.badge{display:inline-block;font-size:11px;background:#fff2aa;border:1px solid #ebcb35;padding:4px 7px;border-radius:999px;white-space:nowrap}
+.badge.green{background:#e5f6ef;border-color:#8ed6bb;color:#116849}
+.badge.blue{background:#e7f0ff;border-color:#a9c7ff;color:#1452a4}
+.badge.gray{background:#edf1f4;border-color:#d7dde3;color:#53606d}
+.empty{text-align:center;padding:26px;border:1px dashed #cfd6dd;border-radius:15px;color:var(--muted)}
+label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin:12px 0 6px}
+input,select,textarea{width:100%;border:1px solid #cfd6dd;background:#fff;color:var(--text);border-radius:12px;padding:12px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent-dark);box-shadow:0 0 0 3px rgba(242,195,0,.16)}
+textarea{min-height:88px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.full{grid-column:1/-1}
+dialog{width:min(760px,calc(100% - 20px));max-height:92vh;overflow:auto;padding:0;border:1px solid var(--line);border-radius:20px;background:#fff;color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.48)}
+.modal-head{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:15px;display:flex;justify-content:space-between;align-items:center;z-index:2}
+.modal-body{padding:15px}.x{border:0;background:transparent;font-size:26px}
+nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);z-index:20;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+.nav-inner{max-width:1050px;margin:auto;display:grid;grid-template-columns:repeat(6,1fr)}
+.nav-btn{border:0;background:none;padding:9px 3px;color:#68727c;font-size:11px}.nav-btn span{font-size:20px;display:block}.nav-btn.active{color:#111;font-weight:800}.nav-btn.active span{color:var(--accent-dark)}
+.drop{border:2px dashed #c8d0d8;border-radius:17px;padding:22px;text-align:center;background:#fafcfd}
+.drop.drag{border-color:var(--accent-dark);background:#fff9d9}
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}
+.kpi{border:1px solid var(--line);background:#fff;border-radius:13px;padding:11px}.kpi span{display:block;font-size:11px;color:var(--muted)}.kpi strong{font-size:18px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:11px;text-transform:uppercase}
+.best{background:#fff8d1;font-weight:800}
+.warn{background:#fff3dc;border-left:4px solid #e2a000;border-radius:10px;padding:11px;font-size:13px;margin-top:11px}
+.ok{background:#eaf8f2;border-left:4px solid var(--green);border-radius:10px;padding:11px;font-size:13px;margin-top:11px}
+.tabs{display:flex;gap:7px;overflow:auto;margin:12px 0}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;white-space:nowrap}.tab.active{background:#111;color:#fff}
+canvas{width:100%;height:250px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.chrono-setup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.name-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.chrono-top{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.session-clock{font-variant-numeric:tabular-nums;font-size:28px;font-weight:900}
+.chrono-grid{display:grid;gap:10px;margin-top:12px}
+.chrono-grid[data-count="1"]{grid-template-columns:1fr}
+.chrono-grid[data-count="2"]{grid-template-columns:repeat(2,1fr)}
+.chrono-grid[data-count="3"],.chrono-grid[data-count="4"]{grid-template-columns:repeat(2,1fr)}
+.chrono-grid[data-count="5"],.chrono-grid[data-count="6"]{grid-template-columns:repeat(2,1fr)}
+.chrono-grid[data-count="7"],.chrono-grid[data-count="8"]{grid-template-columns:repeat(2,1fr)}
+.pilot-tile{position:relative;min-height:190px;border:2px solid #d5dce3;background:#fff;border-radius:20px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;user-select:none;-webkit-user-select:none;touch-action:manipulation;box-shadow:var(--shadow);transition:transform .08s,border-color .15s,background .15s}
+.pilot-tile:active{transform:scale(.985)}
+.pilot-tile.flash{border-color:var(--accent-dark);background:#fff8cc}
+.pilot-tile.best-flash{border-color:var(--green);background:#e9f9f2}
+.pilot-name{font-size:22px;font-weight:900;line-height:1.05;overflow-wrap:anywhere}
+.pilot-current{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;margin:12px 0;color:#222}
+.pilot-current.waiting{color:var(--muted);font-size:20px}
+.pilot-data{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pilot-data div{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:8px 5px;text-align:center}
+.pilot-data span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase}
+.pilot-data strong{font-size:14px;font-variant-numeric:tabular-nums}
+.tap-hint{text-align:center;font-weight:900;color:var(--green);font-size:13px;margin-top:9px}
+.tile-menu{position:absolute;right:8px;top:8px;border:0;background:#edf1f4;border-radius:999px;width:30px;height:30px;font-weight:900;z-index:3}
+.chrono-controls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.chrono-hidden{display:none!important}
+.install-note{background:#eef5ff;border-left:4px solid var(--blue);border-radius:10px;padding:11px;font-size:13px;margin-top:10px}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.chrono-setup,.name-fields{grid-template-columns:1fr}.pilot-tile{min-height:175px;padding:11px}.pilot-name{font-size:19px}.pilot-current{font-size:25px}.form-grid,.summary{grid-template-columns:1fr}.full{grid-column:auto}.app{padding-bottom:100px}table{font-size:12px}th,td{padding:7px 5px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand">
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v0.5 · cronometro a riquadri multipilota</div></div></div>
+<button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
+</div></header>
+
+<main>
+<section id="home" class="screen active">
+<div class="hero"><h2>Dashboard</h2><p>Registra il turno manualmente e completalo poi con i dati esportati da ADA.</p>
+<div class="actions"><button class="btn btn-primary" onclick="openModal('dayModal')">+ Nuova giornata</button><button class="btn btn-secondary" onclick="openModal('sessionModal')">+ Nuovo turno</button><button class="btn btn-blue" onclick="go('import')">Importa ADA</button></div></div>
+<div id="stats" class="grid"></div>
+<div class="card"><h2 class="section-title">Ultima attività</h2><div id="latest"></div></div>
+</section>
+
+<section id="garage" class="screen">
+<div class="hero"><h2>Piloti e moto</h2><p>La moto è generica: marca, modello e cilindrata sono sempre configurabili.</p>
+<div class="actions"><button class="btn btn-primary" onclick="openModal('riderModal')">+ Pilota</button><button class="btn btn-secondary" onclick="openModal('bikeModal')">+ Moto</button></div></div>
+<div class="card"><h2 class="section-title">Piloti</h2><div id="riders" class="list"></div></div>
+<div class="card"><h2 class="section-title">Moto</h2><div id="bikes" class="list"></div></div>
+</section>
+
+<section id="days" class="screen">
+<div class="hero"><h2>Giornate e turni</h2><p>I dati manuali restano archiviati anche dopo l'importazione ADA.</p>
+<div class="actions"><button class="btn btn-primary" onclick="openModal('dayModal')">+ Giornata</button><button class="btn btn-secondary" onclick="openModal('sessionModal')">+ Turno</button></div></div>
+<div id="daysList"></div>
+</section>
+
+
+<section id="chrono" class="screen">
+<div class="hero"><h2>Cronometro multipilota</h2><p>Lo schermo si divide in un riquadro per ogni pilota. Tocca direttamente il pilota a ogni passaggio.</p></div>
+
+<div id="chronoSetup" class="card">
+<h2 class="section-title">Prepara la sessione</h2>
+<div class="chrono-setup">
+<div><label>Numero piloti</label><select id="chronoCount" onchange="buildNameFields()">
+<option value="1">1 pilota</option><option value="2" selected>2 piloti</option><option value="3">3 piloti</option><option value="4">4 piloti</option><option value="5">5 piloti</option><option value="6">6 piloti</option><option value="7">7 piloti</option><option value="8">8 piloti</option>
+</select></div>
+<div><label>Nome sessione</label><input id="chronoName" value="Prove libere" placeholder="Es. Qualifica 1"></div>
+<div class="full"><label>Giornata da associare</label><select id="chronoDay"></select></div>
+</div>
+<label>Nomi piloti</label>
+<div id="chronoNameFields" class="name-fields"></div>
+<div class="actions"><button class="btn btn-primary" onclick="prepareChrono()">AVVIA SESSIONE</button></div>
+<div class="install-note">Il primo tocco sul riquadro di un pilota registra il suo primo passaggio; dai tocchi successivi vengono calcolati i giri uno dopo l'altro.</div>
+</div>
+
+<div id="chronoLive" class="chrono-hidden">
+<div class="card">
+<div class="chrono-top"><div><strong id="liveSessionName">Sessione</strong><p class="muted">Tocca un riquadro a ogni passaggio sul traguardo</p></div><div id="sessionClock" class="session-clock">00:00.000</div></div>
+<div id="chronoGrid" class="chrono-grid"></div>
+<div class="chrono-controls">
+<button class="btn btn-secondary" onclick="chronoAddPilot()">+ Pilota</button>
+<button class="btn btn-danger" onclick="chronoEnd()">Fine sessione</button>
+<button class="btn btn-blue" onclick="chronoSave()">Salva</button>
+</div>
+</div>
+</div>
+
+<div class="card"><h2 class="section-title">Sessioni salvate</h2><div id="chronoHistory" class="list"></div></div>
+</section>
+
+<section id="import" class="screen">
+<div class="hero"><h2>Importa sessione ADA</h2><p>Seleziona lo ZIP esportato da ADA. L'elaborazione avviene soltanto sul dispositivo.</p></div>
+<div class="card">
+<div id="drop" class="drop">
+<h3 style="margin-top:0">Trascina qui lo ZIP ADA</h3>
+<p class="muted">oppure selezionalo dal PC</p>
+<input id="zipInput" type="file" accept=".zip,application/zip" style="margin-top:12px">
+</div>
+<div class="actions"><button class="btn btn-secondary" onclick="loadDemo()">Carica il file dimostrativo incluso</button></div>
+<div id="importStatus"></div>
+</div>
+<div id="preview"></div>
+</section>
+
+<section id="tires" class="screen">
+<div class="hero"><h2>Gomme</h2><p>Conteggio giri automatico collegato ai turni.</p><div class="actions"><button class="btn btn-primary" onclick="openModal('tireModal')">+ Gomma</button></div></div>
+<div class="card"><div id="tiresList" class="list"></div></div>
+</section>
+</main>
+</div>
+
+<nav><div class="nav-inner">
+<button class="nav-btn active" data-screen="home"><span>⌂</span>Home</button>
+<button class="nav-btn" data-screen="garage"><span>🏍</span>Garage</button>
+<button class="nav-btn" data-screen="days"><span>▤</span>Giornate</button>
+<button class="nav-btn" data-screen="chrono"><span>⏱</span>Crono</button>
+<button class="nav-btn" data-screen="import"><span>⇩</span>Importa</button>
+<button class="nav-btn" data-screen="tires"><span>◎</span>Gomme</button>
+</div></nav>
+
+<dialog id="riderModal"><form method="dialog" onsubmit="saveRider(event)"><div class="modal-head"><strong>Nuovo pilota</strong><button class="x" value="cancel">×</button></div><div class="modal-body form-grid">
+<div class="full"><label>Nome e cognome *</label><input id="riderName" required></div><div><label>Numero gara</label><input id="riderNumber" type="number"></div><div><label>Categoria</label><input id="riderCategory"></div><div><label>Peso (kg)</label><input id="riderWeight" type="number" step=".1"></div><div><label>Peso pronto gara (kg)</label><input id="riderRaceWeight" type="number" step=".1"></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
+
+<dialog id="bikeModal"><form method="dialog" onsubmit="saveBike(event)"><div class="modal-head"><strong>Nuova moto</strong><button class="x" value="cancel">×</button></div><div class="modal-body form-grid">
+<div><label>Marca *</label><input id="bikeBrand" required></div><div><label>Modello *</label><input id="bikeModel" required></div><div><label>Cilindrata *</label><input id="bikeCc" required type="number"></div><div><label>Anno</label><input id="bikeYear" type="number"></div><div><label>Categoria</label><input id="bikeCategory"></div><div><label>Motore</label><input id="bikeEngine"></div><div><label>Tipo motore</label><select id="bikeStroke"><option>4T</option><option>2T</option><option>Elettrico</option></select></div><div><label>Ruote</label><input id="bikeWheels" placeholder='10"'></div><div class="full"><label>Configurazione/note</label><textarea id="bikeNotes"></textarea></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
+
+<dialog id="dayModal"><form method="dialog" onsubmit="saveDay(event)"><div class="modal-head"><strong>Nuova giornata</strong><button class="x" value="cancel">×</button></div><div class="modal-body form-grid">
+<div><label>Data *</label><input id="dayDate" type="date" required></div><div><label>Evento</label><select id="dayType"><option>Allenamento</option><option>Prove libere</option><option>Qualifica</option><option>Gara</option></select></div>
+<div><label>Pilota *</label><select id="dayRider" required></select></div><div><label>Moto *</label><select id="dayBike" required></select></div>
+<div class="full"><label>Circuito *</label><input id="dayTrack" required placeholder="Es. Viterbo"></div><div><label>Configurazione pista</label><input id="dayLayout" placeholder="Es. set 050"></div>
+<div><label>Temperatura aria °C</label><input id="dayAir" type="number" step=".1"></div><div><label>Temperatura asfalto °C</label><input id="dayAsphalt" type="number" step=".1"></div>
+<div><label>Meteo</label><select id="dayWeather"><option>Sole</option><option>Nuvoloso</option><option>Variabile</option><option>Pioggia</option></select></div><div><label>Obiettivo</label><input id="dayGoal" placeholder="Es. test rapporto"></div>
+<div class="full"><label>Note</label><textarea id="dayNotes"></textarea></div><div class="full actions"><button class="btn btn-primary">Inizia giornata</button></div></div></form></dialog>
+
+<dialog id="sessionModal"><form method="dialog" onsubmit="saveSession(event)"><div class="modal-head"><strong>Nuovo turno manuale</strong><button class="x" value="cancel">×</button></div><div class="modal-body form-grid">
+<div class="full"><label>Giornata *</label><select id="sessionDay" required></select></div><div><label>Tipo turno</label><select id="sessionType"><option>Libere</option><option>Qualifica</option><option>Warm-up</option><option>Gara 1</option><option>Gara 2</option></select></div><div><label>Numero turno</label><input id="sessionNumber" type="number" value="1"></div>
+<div><label>Orario indicativo</label><input id="sessionTime" type="time"></div><div><label>Giri</label><input id="sessionLaps" type="number"></div><div><label>Miglior giro</label><input id="sessionBest" placeholder="1:01.900"></div>
+<div><label>Pignone</label><input id="sessionFrontGear" type="number"></div><div><label>Corona</label><input id="sessionRearGear" type="number"></div><div><label>SAG anteriore</label><input id="sessionSagF" type="number" step=".1"></div><div><label>SAG posteriore</label><input id="sessionSagR" type="number" step=".1"></div>
+<div><label>Gomma anteriore</label><select id="sessionTireF"></select></div><div><label>Gomma posteriore</label><select id="sessionTireR"></select></div>
+<div class="full"><label>Feedback pilota</label><textarea id="sessionFeedback"></textarea></div><div class="full"><label>Modifiche</label><textarea id="sessionChanges"></textarea></div><div class="full actions"><button class="btn btn-primary">Salva turno</button></div></div></form></dialog>
+
+<dialog id="tireModal"><form method="dialog" onsubmit="saveTire(event)"><div class="modal-head"><strong>Nuova gomma</strong><button class="x" value="cancel">×</button></div><div class="modal-body form-grid">
+<div><label>Codice *</label><input id="tireCode" required></div><div><label>Posizione</label><select id="tirePosition"><option>Anteriore</option><option>Posteriore</option></select></div><div><label>Marca *</label><input id="tireBrand" required></div><div><label>Modello/mescola</label><input id="tireModel"></div><div><label>Misura</label><input id="tireSize"></div><div><label>Giri iniziali</label><input id="tireInitialLaps" type="number" value="0"></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
+
+<script>
+const KEY='raceSetup_v02';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"riders":[],"bikes":[],"days":[],"sessions":[],"tires":[],"adaImports":[],"chronoSessions":[]}');
+db.chronoSessions=db.chronoSessions||[];
+let chrono={active:false,running:false,startAt:0,elapsed:0,raf:null,pilots:[],lastEvent:null};
+let pendingImport=null;
+const $=id=>document.getElementById(id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const fmtDate=s=>{if(!s)return'';let p=s.includes('-')?s.split('-'):[];return p.length===3&&p[0].length===4?`${p[2]}/${p[1]}/${p[0]}`:s}
+const msTime=ms=>{ms=Number(ms||0);let m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000),x=ms%1000;return `${m}:${String(s).padStart(2,'0')}.${String(x).padStart(3,'0')}`}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav-btn').forEach(x=>x.classList.toggle('active',x.dataset.screen===id))}
+document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>go(b.dataset.screen));
+function openModal(id){fillSelects();$(id).showModal()}
+function resetLater(f){setTimeout(()=>f.reset(),50)}
+function empty(t){return `<div class="empty">${t}</div>`}
+function get(type,id){return db[type].find(x=>x.id===id)}
+function del(type,id){if(confirm('Eliminare questo elemento?')){db[type]=db[type].filter(x=>x.id!==id);save()}}
+
+function saveRider(e){e.preventDefault();db.riders.push({id:uid(),name:riderName.value,number:riderNumber.value,category:riderCategory.value,weight:riderWeight.value,raceWeight:riderRaceWeight.value});save();riderModal.close();resetLater(e.target)}
+function saveBike(e){e.preventDefault();db.bikes.push({id:uid(),brand:bikeBrand.value,model:bikeModel.value,cc:bikeCc.value,year:bikeYear.value,category:bikeCategory.value,engine:bikeEngine.value,stroke:bikeStroke.value,wheels:bikeWheels.value,notes:bikeNotes.value});save();bikeModal.close();resetLater(e.target)}
+function saveDay(e){e.preventDefault();db.days.push({id:uid(),date:dayDate.value,type:dayType.value,riderId:dayRider.value,bikeId:dayBike.value,track:dayTrack.value,layout:dayLayout.value,air:dayAir.value,asphalt:dayAsphalt.value,weather:dayWeather.value,goal:dayGoal.value,notes:dayNotes.value});save();dayModal.close();resetLater(e.target)}
+function saveSession(e){e.preventDefault();db.sessions.push({id:uid(),dayId:sessionDay.value,type:sessionType.value,number:sessionNumber.value,time:sessionTime.value,laps:Number(sessionLaps.value||0),manualBest:sessionBest.value,officialBest:'',source:'Manuale',frontGear:sessionFrontGear.value,rearGear:sessionRearGear.value,sagF:sessionSagF.value,sagR:sessionSagR.value,tireF:sessionTireF.value,tireR:sessionTireR.value,feedback:sessionFeedback.value,changes:sessionChanges.value,adaId:null});save();sessionModal.close();resetLater(e.target)}
+function saveTire(e){e.preventDefault();db.tires.push({id:uid(),code:tireCode.value,position:tirePosition.value,brand:tireBrand.value,model:tireModel.value,size:tireSize.value,initialLaps:Number(tireInitialLaps.value||0)});save();tireModal.close();resetLater(e.target)}
+function fill(id,items,label,blank='Seleziona...'){let el=$(id);el.innerHTML=`<option value="">${blank}</option>`+items.map(x=>`<option value="${x.id}">${esc(label(x))}</option>`).join('')}
+function fillSelects(){fill('chronoDay',db.days,x=>`${fmtDate(x.date)} · ${x.track}`,'Nessuna giornata');fill('dayRider',db.riders,x=>x.name);fill('dayBike',db.bikes,x=>`${x.brand} ${x.model} ${x.cc} cc`);fill('sessionDay',db.days,x=>`${fmtDate(x.date)} · ${x.track}`);fill('sessionTireF',db.tires.filter(x=>x.position==='Anteriore'),x=>`${x.code} · ${x.brand} ${x.model}`,'Nessuna');fill('sessionTireR',db.tires.filter(x=>x.position==='Posteriore'),x=>`${x.code} · ${x.brand} ${x.model}`,'Nessuna')}
+function tireLaps(t){return Number(t.initialLaps||0)+db.sessions.filter(s=>s.tireF===t.id||s.tireR===t.id).reduce((a,s)=>a+Number(s.laps||0),0)}
+function render(){
+$('stats').innerHTML=[['Piloti',db.riders.length],['Moto',db.bikes.length],['Turni',db.sessions.length],['Import ADA',db.adaImports.length]].map(x=>`<div class="stat"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');
+$('riders').innerHTML=db.riders.length?db.riders.map(r=>`<div class="item"><div class="row"><div><h3>${esc(r.name)}</h3><p>#${esc(r.number||'—')} · ${esc(r.category||'')}</p></div><button class="btn btn-danger btn-small" onclick="del('riders','${r.id}')">Elimina</button></div></div>`).join(''):empty('Nessun pilota');
+$('bikes').innerHTML=db.bikes.length?db.bikes.map(b=>`<div class="item"><div class="row"><div><h3>${esc(b.brand)} ${esc(b.model)} <span class="badge">${esc(b.cc)} cc</span></h3><p>${esc(b.stroke)} · ${esc(b.category||'')} · ${esc(b.wheels||'')}</p><p>${esc(b.notes||'')}</p></div><button class="btn btn-danger btn-small" onclick="del('bikes','${b.id}')">Elimina</button></div></div>`).join(''):empty('Nessuna moto');
+$('tiresList').innerHTML=db.tires.length?db.tires.map(t=>`<div class="item"><div class="row"><div><h3>${esc(t.code)} · ${esc(t.position)}</h3><p>${esc(t.brand)} ${esc(t.model||'')} · ${esc(t.size||'')}</p><p><strong>${tireLaps(t)} giri totali</strong></p></div><button class="btn btn-danger btn-small" onclick="del('tires','${t.id}')">Elimina</button></div></div>`).join(''):empty('Nessuna gomma');
+let sorted=[...db.days].sort((a,b)=>b.date.localeCompare(a.date));
+$('daysList').innerHTML=sorted.length?sorted.map(d=>dayCard(d)).join(''):empty('Nessuna giornata');
+$('latest').innerHTML=sorted.length?dayCard(sorted[0],true):empty('Crea la prima giornata');
+renderChrono();
+fillSelects()
+}
+function dayCard(d,compact=false){
+let r=get('riders',d.riderId),b=get('bikes',d.bikeId),ss=db.sessions.filter(s=>s.dayId===d.id);
+return `<div class="${compact?'item':'card'}"><div class="row"><div><h3>${fmtDate(d.date)} · ${esc(d.track)} ${d.layout?'<span class="badge">'+esc(d.layout)+'</span>':''}</h3><p>${esc(r?.name||'Pilota')} · ${esc(b?`${b.brand} ${b.model} ${b.cc} cc`:'Moto')} · ${esc(d.type)}</p></div><span class="badge gray">${ss.length} turni</span></div>${compact?'':`<div class="list" style="margin-top:10px">${ss.length?ss.map(sessionCard).join(''):empty('Nessun turno')}</div>`}</div>`
+}
+function sessionCard(s){
+let best=s.officialBest||s.manualBest||'—';
+return `<div class="item"><div class="row"><div><h3>${esc(s.type)} ${esc(s.number)} <span class="badge ${s.source==='ADA'?'green':'gray'}">${esc(s.source)}</span></h3><p>${s.laps} giri · Best ${esc(best)} · Rapporto ${esc(s.frontGear||'—')}/${esc(s.rearGear||'—')}</p><p>${esc(s.feedback||'Nessun feedback')}</p></div>${s.adaId?`<button class="btn btn-secondary btn-small" onclick="showStoredImport('${s.adaId}')">Analisi</button>`:''}</div></div>`
+}
+
+
+function chronoFormat(ms){
+ ms=Math.max(0,Math.floor(ms||0));let m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000),x=ms%1000;
+ return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(x).padStart(3,'0')}`
+}
+function lapFormat(ms){return chronoFormat(ms).replace(/^00:/,'')}
+function chronoNow(){return chrono.running?(performance.now()-chrono.startAt+chrono.elapsed):chrono.elapsed}
+function buildNameFields(){
+ let count=Number($('chronoCount')?.value||2),box=$('chronoNameFields');if(!box)return;
+ let old=[...box.querySelectorAll('input')].map(x=>x.value);
+ box.innerHTML=Array.from({length:count},(_,i)=>`<div><input id="chronoName${i}" value="${esc(old[i]||'')}" placeholder="Nome pilota ${i+1}" autocomplete="off"></div>`).join('')
+}
+function prepareChrono(){
+ let count=Number($('chronoCount').value),names=[];
+ for(let i=0;i<count;i++){let n=$(`chronoName${i}`).value.trim();if(!n){alert(`Inserisci il nome del pilota ${i+1}.`);return}names.push(n)}
+ chrono={active:true,running:true,startAt:performance.now(),elapsed:0,raf:null,lastEvent:null,pilots:names.map((name,i)=>({id:uid(),name,lastPass:null,laps:[],flash:'',paused:false}))};
+ $('chronoSetup').classList.add('chrono-hidden');$('chronoLive').classList.remove('chrono-hidden');$('liveSessionName').textContent=$('chronoName').value||'Sessione cronometrata';
+ chronoTick();renderChrono()
+}
+function chronoTick(){
+ if($('sessionClock'))$('sessionClock').textContent=chronoFormat(chronoNow());
+ if(chrono.active){
+   chrono.pilots.forEach(p=>{
+     let el=$(`current-${p.id}`);
+     if(el&&!p.paused)el.textContent=p.lastPass===null?'TOCCA AL PASSAGGIO':lapFormat(chronoNow()-p.lastPass)
+   })
+ }
+ if(chrono.running)chrono.raf=requestAnimationFrame(chronoTick)
+}
+function tapPilot(id){
+ if(!chrono.active||!chrono.running)return;
+ let p=chrono.pilots.find(x=>x.id===id);if(!p||p.paused)return;
+ let now=chronoNow();
+ if(p.lastPass===null){
+   p.lastPass=now;p.flash='normal';chrono.lastEvent={type:'start',id};
+ }else{
+   let lap=now-p.lastPass;p.lastPass=now;p.laps.push(lap);
+   let best=Math.min(...p.laps),isBest=lap===best;p.flash=isBest?'best':'normal';chrono.lastEvent={type:'lap',id,lap};
+ }
+ renderChrono();
+ setTimeout(()=>{let q=chrono.pilots.find(x=>x.id===id);if(q){q.flash='';renderChrono()}},500)
+}
+function pilotMenu(ev,id){
+ ev.stopPropagation();let p=chrono.pilots.find(x=>x.id===id);if(!p)return;
+ let action=prompt(`${p.name}\n\nScrivi:\n1 = annulla ultimo giro\n2 = pausa/riprendi pilota\n3 = elimina pilota`);
+ if(action==='1')undoPilot(id);else if(action==='2'){p.paused=!p.paused;renderChrono()}else if(action==='3'&&confirm(`Eliminare ${p.name} dalla sessione?`)){chrono.pilots=chrono.pilots.filter(x=>x.id!==id);renderChrono()}
+}
+function undoPilot(id){
+ let p=chrono.pilots.find(x=>x.id===id);if(!p)return;
+ if(p.laps.length){p.laps.pop();p.lastPass=p.laps.reduce((a,x)=>a+x,0)}
+ else if(p.lastPass!==null)p.lastPass=null;
+ renderChrono()
+}
+function chronoAddPilot(){
+ let name=prompt('Nome del nuovo pilota:');if(!name?.trim())return;
+ chrono.pilots.push({id:uid(),name:name.trim(),lastPass:null,laps:[],flash:'',paused:false});renderChrono()
+}
+function chronoEnd(){
+ if(!chrono.active)return;
+ if(!confirm('Terminare la sessione? Potrai ancora salvarla.'))return;
+ chrono.elapsed=chronoNow();chrono.running=false;cancelAnimationFrame(chrono.raf);renderChrono()
+}
+function chronoNew(){
+ chrono={active:false,running:false,startAt:0,elapsed:0,raf:null,pilots:[],lastEvent:null};
+ $('chronoSetup').classList.remove('chrono-hidden');$('chronoLive').classList.add('chrono-hidden');buildNameFields();renderChrono()
+}
+function renderChrono(){
+ let grid=$('chronoGrid');
+ if(grid&&chrono.active){
+   grid.dataset.count=String(chrono.pilots.length);
+   grid.innerHTML=chrono.pilots.map(p=>{
+     let last=p.laps.at(-1)||0,best=p.laps.length?Math.min(...p.laps):0,gap=last&&best?last-best:0;
+     return `<div class="pilot-tile ${p.flash==='best'?'best-flash':p.flash?'flash':''}" onclick="tapPilot('${p.id}')">
+       <button class="tile-menu" onclick="pilotMenu(event,'${p.id}')">⋯</button>
+       <div><div class="pilot-name">${esc(p.name)}</div><div id="current-${p.id}" class="pilot-current ${p.lastPass===null?'waiting':''}">${p.paused?'IN PAUSA':p.lastPass===null?'TOCCA AL PASSAGGIO':lapFormat(chronoNow()-p.lastPass)}</div></div>
+       <div><div class="pilot-data"><div><span>Ultimo</span><strong>${last?lapFormat(last):'—'}</strong></div><div><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div><span>Giri</span><strong>${p.laps.length}</strong></div></div><div class="tap-hint">${p.paused?'PILOTA IN PAUSA':'TOCCA TUTTO IL RIQUADRO = GIRO'}</div></div>
+     </div>`
+   }).join('')
+ }
+ let hist=$('chronoHistory');
+ if(hist)hist.innerHTML=db.chronoSessions.length?[...db.chronoSessions].reverse().map(c=>`<div class="item"><h3>${esc(c.name)}</h3><p>${fmtDate(c.date)} · ${esc(c.track||'Senza giornata')} · durata ${chronoFormat(c.duration)}</p><p>${c.results.map(x=>`${esc(x.name)}: ${x.laps.length} giri, best ${x.best?lapFormat(x.best):'—'}`).join(' · ')}</p></div>`).join(''):empty('Nessuna sessione cronometrata salvata.')
+}
+function chronoSave(){
+ if(!chrono.active){alert('Avvia prima una sessione.');return}
+ if(chrono.running)chronoEnd();
+ let results=chrono.pilots.map(p=>({name:p.name,laps:[...p.laps],best:p.laps.length?Math.min(...p.laps):0})).filter(x=>x.laps.length||x.name);
+ let did=$('chronoDay').value,d=get('days',did);
+ let rec={id:uid(),name:$('chronoName').value||'Sessione cronometrata',dayId:did,date:d?.date||new Date().toISOString().slice(0,10),track:d?.track||'',duration:chrono.elapsed,results,createdAt:new Date().toISOString()};
+ db.chronoSessions.push(rec);
+ if(did&&results[0]?.laps.length){
+   let main=results[0];
+   db.sessions.push({id:uid(),dayId:did,type:rec.name,number:db.sessions.filter(x=>x.dayId===did).length+1,time:new Date().toTimeString().slice(0,5),laps:main.laps.length,manualBest:main.best?lapFormat(main.best):'',officialBest:'',source:'Cronometro',frontGear:'',rearGear:'',sagF:'',sagR:'',tireF:'',tireR:'',feedback:'',changes:'',adaId:null})
+ }
+ save();alert('Sessione salvata.');chronoNew()
+}
+function backup(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='race-setup-v02-backup.json';a.click()}
+
+function u16(d,o){return d.getUint16(o,true)} function u32(d,o){return d.getUint32(o,true)}
+async function unzip(buffer){
+ let dv=new DataView(buffer), bytes=new Uint8Array(buffer), eocd=-1;
+ for(let i=bytes.length-22;i>=Math.max(0,bytes.length-65557);i--){if(u32(dv,i)===0x06054b50){eocd=i;break}}
+ if(eocd<0)throw Error('ZIP non riconosciuto');
+ let count=u16(dv,eocd+10),offset=u32(dv,eocd+16),files={};
+ for(let n=0;n<count;n++){
+  if(u32(dv,offset)!==0x02014b50)break;
+  let method=u16(dv,offset+10),cs=u32(dv,offset+20),us=u32(dv,offset+24),nl=u16(dv,offset+28),el=u16(dv,offset+30),cl=u16(dv,offset+32),lo=u32(dv,offset+42);
+  let name=new TextDecoder().decode(bytes.slice(offset+46,offset+46+nl));
+  let lnl=u16(dv,lo+26),lel=u16(dv,lo+28),start=lo+30+lnl+lel,comp=bytes.slice(start,start+cs),raw;
+  if(method===0)raw=comp;
+  else if(method===8){let ds=new DecompressionStream('deflate-raw');raw=new Uint8Array(await new Response(new Blob([comp]).stream().pipeThrough(ds)).arrayBuffer())}
+  else throw Error('Metodo ZIP non supportato: '+method);
+  files[name]=raw;offset+=46+nl+el+cl
+ }
+ return files
+}
+const txt=b=>new TextDecoder('utf-8').decode(b).replace(/^\uFEFF/,'');
+function csv(text){return text.trim().split(/\r?\n/).map(line=>line.split(','))}
+function cleanTrack(s){return String(s||'').replace(/\*P\*/g,'').trim()}
+function parseSummary(text){
+ let rows=csv(text),meta=rows[0],heads=rows[1].map(x=>x.trim()),laps=[];
+ for(let i=2;i<rows.length;i++){if(!rows[i][0])continue;let o={};heads.forEach((h,j)=>o[h]=rows[i][j]);laps.push(o)}
+ let vals=laps.map(x=>Number(x['time lap']||0)).filter(x=>x>0),best=Math.min(...vals);
+ return {date:meta[0],time:meta[1],declaredLaps:Number(meta[2]),serial:meta[3],track:cleanTrack(meta[4]),profile:meta[5],device:meta[9],sectors:Number(meta[11]||0),laps,best}
+}
+function parseLap(text){
+ let rows=csv(text),head=rows[0].map(x=>x.trim()),data=[];
+ for(let i=1;i<rows.length;i++){if(!rows[i].length)continue;let o={};head.forEach((h,j)=>o[h]=Number(rows[i][j]));data.push(o)}
+ return data
+}
+async function processZip(file){
+ $('importStatus').innerHTML='<div class="warn">Lettura dello ZIP in corso…</div>';$('preview').innerHTML='';
+ try{
+  let files=await unzip(await file.arrayBuffer()), names=Object.keys(files), summaryName=names.find(n=>/^SN.*\.csv$/i.test(n));
+  if(!summaryName)throw Error('File riepilogativo ADA non trovato');
+  let summary=parseSummary(txt(files[summaryName])), lapFiles=names.filter(n=>/^LAP_\d+_.*\.csv$/i.test(n)).sort((a,b)=>Number(a.match(/^LAP_(\d+)/)[1])-Number(b.match(/^LAP_(\d+)/)[1]));
+  let details={}; for(let n of lapFiles){let no=Number(n.match(/^LAP_(\d+)/)[1]);details[no]=parseLap(txt(files[n]))}
+  let theo=files['lap_theorique.csv']?parseLap(txt(files['lap_theorique.csv'])):[],theoFirst=files['lap_theorique.csv']?csv(txt(files['lap_theorique.csv']))[0][0]:0;
+  pendingImport={id:uid(),fileName:file.name,summary,details,theoretical:{time:Number(theoFirst||0),data:theo},fileNames:names};
+  $('importStatus').innerHTML='<div class="ok">Sessione letta correttamente.</div>';renderPreview(pendingImport)
+ }catch(e){console.error(e);$('importStatus').innerHTML=`<div class="warn"><strong>Importazione non riuscita:</strong> ${esc(e.message)}<br>Apri l'app con Chrome o Edge aggiornato.</div>`}
+}
+function renderPreview(x){
+ let s=x.summary,bestNo=s.laps.find(l=>Number(l['time lap'])===s.best)?.lap;
+ $('preview').innerHTML=`<div class="card"><div class="row"><div><h2 class="section-title">Sessione ADA trovata</h2><p class="muted">${esc(x.fileName)}</p></div><span class="badge green">Alfano 7</span></div>
+ <div class="summary"><div class="kpi"><span>Pilota/profilo</span><strong>${esc(s.profile)}</strong></div><div class="kpi"><span>Circuito</span><strong>${esc(s.track)}</strong></div><div class="kpi"><span>Data e ora</span><strong>${esc(s.date)} · ${esc(s.time)}</strong></div><div class="kpi"><span>Giri validi</span><strong>${s.laps.length}</strong></div><div class="kpi"><span>Best lap</span><strong>${msTime(s.best)}</strong></div><div class="kpi"><span>Giro teorico</span><strong>${msTime(x.theoretical.time)}</strong></div></div>
+ ${Object.keys(x.details).length>s.laps.length?`<div class="warn">Lo ZIP contiene ${Object.keys(x.details).length} file giro, mentre il riepilogo classifica ${s.laps.length} giri. I file aggiuntivi restano disponibili ma non vengono conteggiati come giri ufficiali.</div>`:''}
+ <div style="overflow:auto;margin-top:12px"><table><thead><tr><th>Giro</th><th>Tempo</th><th>S1</th><th>S2</th><th>S3</th><th>Vel. max</th><th>RPM max</th><th>EGT max</th></tr></thead><tbody>
+ ${s.laps.map(l=>`<tr class="${String(l.lap)===String(bestNo)?'best':''}"><td>${l.lap}</td><td>${msTime(l['time lap'])}</td><td>${msTime(l['time partiel 1'])}</td><td>${msTime(l['time partiel 2'])}</td><td>${msTime(l['time partiel 3'])}</td><td>${(Number(l['Max Speed GPS']||0)/10).toFixed(1)} km/h</td><td>${l['Max RPM']}</td><td>${(Number(l['max EGT']||0)/10).toFixed(1)} °C</td></tr>`).join('')}
+ </tbody></table></div>
+ <div class="actions"><button class="btn btn-blue" onclick="showAssociate()">Associa a un turno</button><button class="btn btn-secondary" onclick="drawLap(${bestNo||1})">Mostra grafico best lap</button></div>
+ <div id="associate"></div><div id="chartArea"></div></div>`
+}
+function showAssociate(){
+ let s=pendingImport.summary, candidates=db.sessions.map(x=>{let d=get('days',x.dayId);return {s:x,d,score:(d?.track||'').toLowerCase().includes(s.track.split(' ')[0].toLowerCase())?2:0}});
+ $('associate').innerHTML=`<div class="item" style="margin-top:13px"><h3>Associazione al turno</h3><label>Turno esistente</label><select id="assocSession"><option value="">Crea un nuovo turno ADA</option>${candidates.map(c=>`<option value="${c.s.id}">${fmtDate(c.d?.date)} · ${esc(c.d?.track||'')} · ${esc(c.s.type)} ${esc(c.s.number)} · manuale ${esc(c.s.manualBest||'—')}</option>`).join('')}</select><label>Giornata per nuovo turno</label><select id="assocDay"><option value="">Seleziona giornata</option>${db.days.map(d=>`<option value="${d.id}">${fmtDate(d.date)} · ${esc(d.track)}</option>`).join('')}</select><div class="actions"><button class="btn btn-primary" onclick="confirmImport()">Importa e usa i dati ADA</button></div><p class="muted">I tempi manuali non saranno cancellati: resteranno memorizzati come riferimento originale.</p></div>`
+}
+function confirmImport(){
+ let sid=$('assocSession')?.value,did=$('assocDay')?.value,s=pendingImport.summary,stored=JSON.parse(JSON.stringify(pendingImport));
+ db.adaImports.push(stored);
+ if(sid){
+  let sess=get('sessions',sid);sess.source='ADA';sess.officialBest=msTime(s.best);sess.laps=s.laps.length;sess.adaId=stored.id
+ }else{
+  if(!did){alert('Seleziona una giornata oppure un turno esistente.');return}
+  db.sessions.push({id:uid(),dayId:did,type:'Sessione ADA',number:db.sessions.filter(x=>x.dayId===did).length+1,time:s.time,laps:s.laps.length,manualBest:'',officialBest:msTime(s.best),source:'ADA',frontGear:'',rearGear:'',sagF:'',sagR:'',tireF:'',tireR:'',feedback:'',changes:'',adaId:stored.id})
+ }
+ save();$('importStatus').innerHTML='<div class="ok"><strong>Importazione completata.</strong> I dati ADA sono ora associati al turno.</div>';go('days')
+}
+function showStoredImport(id){pendingImport=db.adaImports.find(x=>x.id===id);go('import');$('importStatus').innerHTML='<div class="ok">Sessione già importata.</div>';renderPreview(pendingImport)}
+function drawLap(no){
+ let data=pendingImport.details[no]||[], area=$('chartArea');area.innerHTML=`<h3>Best lap · giro ${no}</h3><p class="muted">Anteprima velocità GPS e RPM lungo i campioni registrati.</p><canvas id="chart" width="900" height="300"></canvas>`;
+ let c=$('chart'),ctx=c.getContext('2d'),w=c.width,h=c.height,pad=38;ctx.clearRect(0,0,w,h);ctx.strokeStyle='#dfe4e9';ctx.lineWidth=1;for(let i=0;i<5;i++){let y=pad+(h-pad*2)*i/4;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-pad,y);ctx.stroke()}
+ function line(vals,max,stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.beginPath();vals.forEach((v,i)=>{let x=pad+(w-pad*2)*i/(vals.length-1||1),y=h-pad-(h-pad*2)*(v/max);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+ let speed=data.map(x=>Number(x['Speed GPS 25Hz']||x['Speed GPS']||0)/10),rpm=data.map(x=>Number(x.RPM||0)),maxS=Math.max(...speed,1),maxR=Math.max(...rpm,1);line(speed,maxS,'#0d6efd');line(rpm,maxR,'#d19f00');ctx.fillStyle='#0d6efd';ctx.fillText(`Velocità max ${maxS.toFixed(1)} km/h`,pad,18);ctx.fillStyle='#9b7600';ctx.fillText(`RPM max ${Math.round(maxR)}`,pad+190,18)
+}
+async function loadDemo(){try{let r=await fetch('ESEMPIO_SESSIONE_ADA.zip');if(!r.ok)throw Error();let b=await r.blob();await processZip(new File([b],'ESEMPIO_SESSIONE_ADA.zip',{type:'application/zip'}))}catch(e){$('importStatus').innerHTML='<div class="warn">Il file dimostrativo non è accessibile. Avvia Race Setup tramite AVVIA_RACE_SETUP.bat, non aprendo direttamente index.html.</div>'}}
+zipInput.onchange=e=>e.target.files[0]&&processZip(e.target.files[0]);
+['dragenter','dragover'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.add('drag')}));
+['dragleave','drop'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.remove('drag')}));
+drop.addEventListener('drop',e=>e.dataTransfer.files[0]&&processZip(e.dataTransfer.files[0]));
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
+ navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+}
+dayDate.valueAsDate=new Date();buildNameFields();render();
+</script>
+</body></html>
