@@ -1,20 +1,12 @@
-# Race Setup v0.7
+# Race Setup v0.8
 
-Versione di sviluppo pubblicabile su GitHub Pages.
-
-## Cronometro
-- modalità a schermo intero;
-- un riquadro per ciascun pilota;
-- nome, ultimo giro, best, distacco e numero di giri sempre visibili;
-- conferma tramite vibrazione, quando supportata;
-- analisi finale con tutti i giri;
-- esclusione e reinserimento dei giri nelle statistiche;
-- media dei giri validi;
-- media ultimi 5 e ultimi 10;
-- indice di costanza e range.
-
-## Altre funzioni
-- piloti, moto, giornate e gomme;
-- salvataggio locale sul dispositivo;
-- importazione ZIP ADA/Alfano;
-- PWA installabile su iPhone.
+## Novità
+- sessioni cronometrate salvate riapribili;
+- dettaglio completo di tutti i piloti e di tutti i giri;
+- esclusione/reinserimento dei giri anche dopo il salvataggio;
+- ricalcolo automatico di best, media, ultimi 5/10, costanza e range;
+- rinomina ed eliminazione delle sessioni;
+- cronometro completamente bloccato durante l'utilizzo;
+- nessuno scroll, trascinamento, zoom o selezione testo;
+- registrazione al primo contatto del dito tramite pointerdown;
+- griglia che occupa tutto lo schermo disponibile.

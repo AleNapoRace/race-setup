@@ -2,14 +2,14 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v0.7</title>
+<title>Race Setup v0.8</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -134,6 +134,43 @@ body.chrono-focus #chrono>.hero,body.chrono-focus #chronoSetup,body.chrono-focus
 .lap-invalid{opacity:.42;text-decoration:line-through}
 .lap-best{background:#e6f8ef;font-weight:900}
 .lap-click{cursor:pointer}
+
+html.chrono-locked,body.chrono-locked{
+  width:100%;
+  height:100%;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  touch-action:none!important;
+  position:fixed;
+  inset:0;
+}
+body.chrono-locked *{
+  -webkit-user-select:none!important;
+  user-select:none!important;
+  -webkit-touch-callout:none!important;
+}
+body.chrono-locked #chronoLive,
+body.chrono-locked .live-shell{
+  width:100vw;
+  height:100dvh;
+  min-height:100dvh;
+  max-height:100dvh;
+  overflow:hidden!important;
+}
+body.chrono-locked .live-grid{
+  min-height:0;
+  overflow:hidden!important;
+}
+body.chrono-locked .live-tile{
+  overflow:hidden;
+  touch-action:none!important;
+}
+.saved-session-card{cursor:pointer}
+.saved-session-card:active{transform:scale(.995)}
+.saved-session-detail .session-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.saved-session-detail .session-actions{display:flex;gap:8px;flex-wrap:wrap}
+.saved-session-detail .pilot-block{margin-top:14px}
+
 @media(max-width:700px){.analysis-grid{grid-template-columns:repeat(2,1fr)}}
 
 @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.chrono-setup,.name-fields{grid-template-columns:1fr}.pilot-tile{min-height:175px;padding:11px}.pilot-name{font-size:19px}.pilot-current{font-size:25px}.form-grid,.summary{grid-template-columns:1fr}.full{grid-column:auto}.app{padding-bottom:100px}table{font-size:12px}th,td{padding:7px 5px}}
@@ -142,7 +179,7 @@ body.chrono-focus #chrono>.hero,body.chrono-focus #chronoSetup,body.chrono-focus
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v0.7 · crono full screen e analisi</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v0.8 · crono bloccato e sessioni riapribili</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -301,19 +338,88 @@ function chronoFormat(ms){ms=Math.max(0,Math.floor(ms||0));let m=Math.floor(ms/6
 function lapFormat(ms){return chronoFormat(ms).replace(/^00:/,'')}
 function chronoNow(){return chrono.running?(performance.now()-chrono.startAt+chrono.elapsed):chrono.elapsed}
 function buildNameFields(){let n=Number($('chronoCount')?.value||2),box=$('chronoNameFields');if(!box)return;let old=[...box.querySelectorAll('input')].map(x=>x.value);box.innerHTML=Array.from({length:n},(_,i)=>`<input id="chronoName${i}" value="${esc(old[i]||'')}" placeholder="Nome pilota ${i+1}">`).join('')}
-function prepareChrono(){let n=Number($('chronoCount').value),names=[];for(let i=0;i<n;i++){let v=$(`chronoName${i}`).value.trim();if(!v){alert(`Inserisci il nome del pilota ${i+1}`);return}names.push(v)}chrono={active:true,running:true,startAt:performance.now(),elapsed:0,raf:null,pilots:names.map(name=>({id:uid(),name,lastPass:null,laps:[],excluded:[],flash:'',paused:false}))};$('chronoSetup').classList.add('chrono-hidden');$('chronoLive').classList.remove('chrono-hidden');$('chronoAnalysis').classList.add('chrono-hidden');$('liveSessionName').textContent=$('chronoName').value||'Sessione';document.body.classList.add('chrono-focus');renderChrono();chronoTick()}
+function prepareChrono(){let n=Number($('chronoCount').value),names=[];for(let i=0;i<n;i++){let v=$(`chronoName${i}`).value.trim();if(!v){alert(`Inserisci il nome del pilota ${i+1}`);return}names.push(v)}chrono={active:true,running:true,startAt:performance.now(),elapsed:0,raf:null,pilots:names.map(name=>({id:uid(),name,lastPass:null,laps:[],excluded:[],flash:'',paused:false}))};$('chronoSetup').classList.add('chrono-hidden');$('chronoLive').classList.remove('chrono-hidden');$('chronoAnalysis').classList.add('chrono-hidden');$('liveSessionName').textContent=$('chronoName').value||'Sessione';document.body.classList.add('chrono-focus','chrono-locked');document.documentElement.classList.add('chrono-locked');renderChrono();chronoTick()}
 function chronoTick(){if($('sessionClock'))$('sessionClock').textContent=chronoFormat(chronoNow());if(chrono.running)chrono.raf=requestAnimationFrame(chronoTick)}
-function tapPilot(id){if(!chrono.running)return;if(navigator.vibrate)navigator.vibrate(18);let p=chrono.pilots.find(x=>x.id===id);if(!p||p.paused)return;let now=chronoNow();if(p.lastPass===null){p.lastPass=now;p.flash='normal'}else{let lap=now-p.lastPass;p.lastPass=now;p.laps.push(lap);p.excluded.push(false);p.flash=lap===Math.min(...p.laps)?'best':'normal'}renderChrono();setTimeout(()=>{let q=chrono.pilots.find(x=>x.id===id);if(q){q.flash='';renderChrono()}},450)}
+function tapPilot(id,event){if(event){event.preventDefault();event.stopPropagation()}if(!chrono.running)return;if(navigator.vibrate)navigator.vibrate(18);let p=chrono.pilots.find(x=>x.id===id);if(!p||p.paused)return;let now=chronoNow();if(p.lastPass===null){p.lastPass=now;p.flash='normal'}else{let lap=now-p.lastPass;p.lastPass=now;p.laps.push(lap);p.excluded.push(false);p.flash=lap===Math.min(...p.laps)?'best':'normal'}renderChrono();setTimeout(()=>{let q=chrono.pilots.find(x=>x.id===id);if(q){q.flash='';renderChrono()}},450)}
 function pilotMenu(ev,id){ev.stopPropagation();let p=chrono.pilots.find(x=>x.id===id);let a=prompt(`${p.name}\n1 = annulla ultimo giro\n2 = pausa/riprendi`);if(a==='1'){if(p.laps.length){p.laps.pop();p.excluded.pop();p.lastPass=p.laps.reduce((x,y)=>x+y,0)}else p.lastPass=null;renderChrono()}else if(a==='2'){p.paused=!p.paused;renderChrono()}}
-function renderChrono(){let grid=$('chronoGrid');if(grid&&chrono.active){grid.dataset.count=chrono.pilots.length;grid.innerHTML=chrono.pilots.map(p=>{let last=p.laps.at(-1)||0,best=p.laps.length?Math.min(...p.laps):0,gap=last&&best?last-best:0;return `<div class="live-tile ${p.flash==='best'?'bestflash':p.flash?'flash':''}" onclick="tapPilot('${p.id}')"><button class="live-menu" onclick="pilotMenu(event,'${p.id}')">⋯</button><div class="live-name">${esc(p.name)}</div><div class="live-main"><div class="live-label">ULTIMO GIRO</div><div class="live-last">${last?lapFormat(last):(p.lastPass===null?'—':'ATTESA GIRO')}</div><div class="live-gap ${gap===0&&last?'best':''}">${last?(gap===0?'NUOVO BEST':'+'+lapFormat(gap)):'Tocca al passaggio'}</div></div><div class="live-stats"><div class="live-stat"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="live-stat"><span>Giri</span><strong>${p.laps.length}</strong></div></div></div>`}).join('')}let h=$('chronoHistory');if(h)h.innerHTML=db.chronoSessions.length?[...db.chronoSessions].reverse().map(c=>`<div class="item"><h3>${esc(c.name)}</h3><p>${c.results.map(r=>`${esc(r.name)}: ${r.laps.length} giri, best ${r.best?lapFormat(r.best):'—'}`).join(' · ')}</p></div>`).join(''):empty('Nessuna sessione salvata')}
+function renderChrono(){let grid=$('chronoGrid');if(grid&&chrono.active){grid.dataset.count=chrono.pilots.length;grid.innerHTML=chrono.pilots.map(p=>{let last=p.laps.at(-1)||0,best=p.laps.length?Math.min(...p.laps):0,gap=last&&best?last-best:0;return `<div class="live-tile ${p.flash==='best'?'bestflash':p.flash?'flash':''}" onpointerdown="tapPilot('${p.id}',event)"><button class="live-menu" onclick="pilotMenu(event,'${p.id}')">⋯</button><div class="live-name">${esc(p.name)}</div><div class="live-main"><div class="live-label">ULTIMO GIRO</div><div class="live-last">${last?lapFormat(last):(p.lastPass===null?'—':'ATTESA GIRO')}</div><div class="live-gap ${gap===0&&last?'best':''}">${last?(gap===0?'NUOVO BEST':'+'+lapFormat(gap)):'Tocca al passaggio'}</div></div><div class="live-stats"><div class="live-stat"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="live-stat"><span>Giri</span><strong>${p.laps.length}</strong></div></div></div>`}).join('')}let h=$('chronoHistory');if(h)h.innerHTML=db.chronoSessions.length?[...db.chronoSessions].reverse().map(c=>`<div class="item"><h3>${esc(c.name)}</h3><p>${c.results.map(r=>`${esc(r.name)}: ${r.laps.length} giri, best ${r.best?lapFormat(r.best):'—'}`).join(' · ')}</p></div>`).join(''):empty('Nessuna sessione salvata')}
 function validLaps(p){return p.laps.filter((_,i)=>!p.excluded[i])}
 function avg(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:0}
 function consistency(a){if(a.length<2)return 100;let m=avg(a),sd=Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/a.length);return Math.max(0,Math.min(100,100-(sd/m*500)))}
 function toggleLap(id,i){let p=chrono.pilots.find(x=>x.id===id);p.excluded[i]=!p.excluded[i];renderAnalysis()}
-function chronoEnd(){if(!confirm('Terminare la sessione?'))return;chrono.elapsed=chronoNow();chrono.running=false;cancelAnimationFrame(chrono.raf);document.body.classList.remove('chrono-focus');$('chronoLive').classList.add('chrono-hidden');$('chronoAnalysis').classList.remove('chrono-hidden');renderAnalysis()}
+function chronoEnd(){if(!confirm('Terminare la sessione?'))return;chrono.elapsed=chronoNow();chrono.running=false;cancelAnimationFrame(chrono.raf);document.body.classList.remove('chrono-focus','chrono-locked');document.documentElement.classList.remove('chrono-locked');$('chronoLive').classList.add('chrono-hidden');$('chronoAnalysis').classList.remove('chrono-hidden');renderAnalysis()}
 function renderAnalysis(){let box=$('chronoAnalysis');box.innerHTML=`<div class="hero"><h2>Analisi sessione</h2><p>${esc($('chronoName').value)} · durata ${chronoFormat(chrono.elapsed)}</p></div>`+chrono.pilots.map(p=>{let v=validLaps(p),best=v.length?Math.min(...v):0,mean=avg(v),m5=avg(v.slice(-5)),m10=avg(v.slice(-10)),worst=v.length?Math.max(...v):0;return `<div class="card"><h2>${esc(p.name)}</h2><div class="analysis-grid"><div class="analysis-kpi"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="analysis-kpi"><span>Media validi</span><strong>${mean?lapFormat(mean):'—'}</strong></div><div class="analysis-kpi"><span>Ultimi 5</span><strong>${m5?lapFormat(m5):'—'}</strong></div><div class="analysis-kpi"><span>Ultimi 10</span><strong>${m10?lapFormat(m10):'—'}</strong></div><div class="analysis-kpi"><span>Costanza</span><strong>${consistency(v).toFixed(1)}%</strong></div><div class="analysis-kpi"><span>Range</span><strong>${best&&worst?lapFormat(worst-best):'—'}</strong></div><div class="analysis-kpi"><span>Validi</span><strong>${v.length}</strong></div><div class="analysis-kpi"><span>Esclusi</span><strong>${p.excluded.filter(Boolean).length}</strong></div></div><div style="overflow:auto"><table><thead><tr><th>Giro</th><th>Tempo</th><th>Δ Best</th><th>Stato</th></tr></thead><tbody>${p.laps.map((lap,i)=>`<tr onclick="toggleLap('${p.id}',${i})" class="lap-click ${p.excluded[i]?'lap-invalid':''} ${!p.excluded[i]&&lap===best?'lap-best':''}"><td>${i+1}</td><td>${lapFormat(lap)}</td><td>${lap===best?'BEST':'+'+lapFormat(lap-best)}</td><td>${p.excluded[i]?'Escluso':'Valido'}</td></tr>`).join('')}</tbody></table></div><p class="muted">Tocca un giro per escluderlo o reinserirlo nelle statistiche.</p></div>`}).join('')+`<div class="card"><div class="actions"><button class="btn btn-blue" onclick="chronoSave()">Salva sessione</button><button class="btn btn-secondary" onclick="chronoNew()">Nuova sessione</button></div></div>`}
-function chronoNew(){chrono={active:false,running:false,startAt:0,elapsed:0,raf:null,pilots:[]};document.body.classList.remove('chrono-focus');$('chronoSetup').classList.remove('chrono-hidden');$('chronoLive').classList.add('chrono-hidden');$('chronoAnalysis').classList.add('chrono-hidden');buildNameFields();renderChrono()}
+function chronoNew(){chrono={active:false,running:false,startAt:0,elapsed:0,raf:null,pilots:[]};document.body.classList.remove('chrono-focus','chrono-locked');document.documentElement.classList.remove('chrono-locked');$('chronoSetup').classList.remove('chrono-hidden');$('chronoLive').classList.add('chrono-hidden');$('chronoAnalysis').classList.add('chrono-hidden');buildNameFields();renderChrono()}
 function chronoSave(){let results=chrono.pilots.map(p=>({name:p.name,laps:[...p.laps],excluded:[...p.excluded],best:validLaps(p).length?Math.min(...validLaps(p)):0,average:avg(validLaps(p))}));let did=$('chronoDay').value,d=get('days',did);db.chronoSessions.push({id:uid(),name:$('chronoName').value||'Sessione',dayId:did,date:d?.date||new Date().toISOString().slice(0,10),track:d?.track||'',duration:chrono.elapsed,results});save();alert('Sessione salvata');chronoNew()}
+
+
+function sessionResultValidLaps(result){
+  if(Array.isArray(result.validLaps)) return result.validLaps;
+  let laps=Array.isArray(result.laps)?result.laps:[];
+  let excluded=Array.isArray(result.excluded)?result.excluded:[];
+  return laps.filter((_,i)=>!excluded[i]);
+}
+function openSavedSession(id){
+  let session=db.chronoSessions.find(x=>x.id===id);
+  if(!session)return;
+  go('chrono');
+  $('chronoSetup').classList.add('chrono-hidden');
+  $('chronoLive').classList.add('chrono-hidden');
+  $('chronoHistoryCard').classList.add('chrono-hidden');
+  $('chronoAnalysis').classList.remove('chrono-hidden');
+  renderSavedSession(session);
+}
+function closeSavedSession(){
+  $('chronoAnalysis').classList.add('chrono-hidden');
+  $('chronoSetup').classList.remove('chrono-hidden');
+  $('chronoHistoryCard').classList.remove('chrono-hidden');
+}
+function toggleSavedLap(sessionId,pilotIndex,lapIndex){
+  let session=db.chronoSessions.find(x=>x.id===sessionId);
+  if(!session)return;
+  let result=session.results[pilotIndex];
+  result.excluded=result.excluded||result.laps.map(()=>false);
+  result.excluded[lapIndex]=!result.excluded[lapIndex];
+  let valid=sessionResultValidLaps(result);
+  result.validLaps=[...valid];
+  result.best=valid.length?Math.min(...valid):0;
+  result.average=avg(valid);
+  save();
+  renderSavedSession(session);
+}
+function renameSavedSession(id){
+  let session=db.chronoSessions.find(x=>x.id===id);if(!session)return;
+  let name=prompt('Nuovo nome sessione:',session.name);
+  if(!name?.trim())return;
+  session.name=name.trim();save();renderSavedSession(session);
+}
+function deleteSavedSession(id){
+  if(!confirm('Eliminare definitivamente questa sessione?'))return;
+  db.chronoSessions=db.chronoSessions.filter(x=>x.id!==id);
+  save();closeSavedSession();renderChrono();
+}
+function renderSavedSession(session){
+  let box=$('chronoAnalysis');
+  box.innerHTML=`<div class="hero saved-session-detail"><div class="session-head"><div><h2>${esc(session.name)}</h2><p>${fmtDate(session.date)} · ${esc(session.track||'Senza circuito')} · durata ${chronoFormat(session.duration)}</p></div><button class="btn btn-secondary btn-small" onclick="closeSavedSession()">Indietro</button></div><div class="session-actions"><button class="btn btn-secondary btn-small" onclick="renameSavedSession('${session.id}')">Rinomina</button><button class="btn btn-danger btn-small" onclick="deleteSavedSession('${session.id}')">Elimina</button></div></div>`+
+  session.results.map((result,pilotIndex)=>{
+    result.excluded=result.excluded||result.laps.map(()=>false);
+    let valid=sessionResultValidLaps(result),best=valid.length?Math.min(...valid):0,mean=avg(valid),m5=avg(valid.slice(-5)),m10=avg(valid.slice(-10)),worst=valid.length?Math.max(...valid):0;
+    return `<div class="card pilot-block"><h2 class="section-title">${esc(result.name)}</h2>
+    <div class="analysis-grid">
+      <div class="analysis-kpi"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div>
+      <div class="analysis-kpi"><span>Media validi</span><strong>${mean?lapFormat(mean):'—'}</strong></div>
+      <div class="analysis-kpi"><span>Ultimi 5</span><strong>${m5?lapFormat(m5):'—'}</strong></div>
+      <div class="analysis-kpi"><span>Ultimi 10</span><strong>${m10?lapFormat(m10):'—'}</strong></div>
+      <div class="analysis-kpi"><span>Costanza</span><strong>${consistency(valid).toFixed(1)}%</strong></div>
+      <div class="analysis-kpi"><span>Range</span><strong>${best&&worst?lapFormat(worst-best):'—'}</strong></div>
+      <div class="analysis-kpi"><span>Validi</span><strong>${valid.length}</strong></div>
+      <div class="analysis-kpi"><span>Esclusi</span><strong>${result.excluded.filter(Boolean).length}</strong></div>
+    </div>
+    <div style="overflow:auto"><table><thead><tr><th>Giro</th><th>Tempo</th><th>Δ Best</th><th>Stato</th></tr></thead><tbody>
+    ${result.laps.map((lap,i)=>`<tr onclick="toggleSavedLap('${session.id}',${pilotIndex},${i})" class="lap-click ${result.excluded[i]?'lap-invalid':''} ${!result.excluded[i]&&lap===best?'lap-best':''}"><td>${i+1}</td><td>${lapFormat(lap)}</td><td>${lap===best?'BEST':'+'+lapFormat(lap-best)}</td><td>${result.excluded[i]?'Escluso':'Valido'}</td></tr>`).join('')}
+    </tbody></table></div><p class="muted">Tocca un giro per escluderlo o reinserirlo.</p></div>`
+  }).join('');
+}
 
 function backup(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='race-setup-v02-backup.json';a.click()}
 
@@ -402,6 +508,11 @@ drop.addEventListener('drop',e=>e.dataTransfer.files[0]&&processZip(e.dataTransf
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
  navigator.serviceWorker.register('service-worker.js').then(r=>r.update()).catch(()=>{});
 }
+
+document.addEventListener('touchmove',e=>{if(document.body.classList.contains('chrono-locked'))e.preventDefault()},{passive:false});
+document.addEventListener('gesturestart',e=>{if(document.body.classList.contains('chrono-locked'))e.preventDefault()},{passive:false});
+document.addEventListener('contextmenu',e=>{if(document.body.classList.contains('chrono-locked'))e.preventDefault()});
+
 dayDate.valueAsDate=new Date();buildNameFields();render();
 </script>
 </body></html>
