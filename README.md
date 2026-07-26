@@ -1,19 +1,17 @@
-# Race Setup v1.0
+# Race Setup v1.2
 
-## Correzioni
-- la X chiude correttamente tutti i moduli:
-  - Nuovo pilota
-  - Nuova moto
-  - Nuova giornata
-  - Nuovo turno
-  - Nuova gomma
-- chiusura anche toccando fuori dal popup;
-- chiusura con Esc su PC;
-- nessun salvataggio dei dati quando il popup viene annullato.
+La pagina Turno ora include:
 
-## Cronometro
-- associazione a una giornata;
-- associazione a un turno esistente;
-- creazione automatica di un nuovo turno;
-- aggiornamento di numero giri e best del turno collegato;
-- indicazione del collegamento nell’archivio delle sessioni.
+- giornata, tipo turno, numero turno e orario automatico;
+- rapporto pignone/corona;
+- foto Prisma e dati meteo;
+- carburazione;
+- temperature sonda gas di scarico;
+- gomme e pressioni/temperature prima e dopo il turno;
+- forcelle;
+- mono;
+- giro migliore;
+- velocità massima;
+- note.
+
+I dati sono raggruppati per sezioni per rendere la compilazione più chiara in pista.

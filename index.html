@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v1.0</title>
+<title>Race Setup v1.2</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -171,6 +171,12 @@ body.chrono-locked .live-tile{
 .saved-session-detail .session-actions{display:flex;gap:8px;flex-wrap:wrap}
 .saved-session-detail .pilot-block{margin-top:14px}
 
+
+.form-section{grid-column:1/-1;margin-top:14px;padding-top:10px;border-top:2px solid var(--line)}
+.form-section h3{margin:0 0 2px;font-size:16px}
+.form-section p{margin:0;color:var(--muted);font-size:12px}
+.preview-photo{margin-top:8px;max-width:100%;border-radius:12px;border:1px solid var(--line);display:none}
+
 @media(max-width:700px){.analysis-grid{grid-template-columns:repeat(2,1fr)}}
 
 @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.chrono-setup,.name-fields{grid-template-columns:1fr}.pilot-tile{min-height:175px;padding:11px}.pilot-name{font-size:19px}.pilot-current{font-size:25px}.form-grid,.summary{grid-template-columns:1fr}.full{grid-column:auto}.app{padding-bottom:100px}table{font-size:12px}th,td{padding:7px 5px}}
@@ -179,7 +185,7 @@ body.chrono-locked .live-tile{
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.0 · collegamento turni e popup corretti</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.2 · scheda turno tecnica completa</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -192,10 +198,15 @@ body.chrono-locked .live-tile{
 </section>
 
 <section id="garage" class="screen">
-<div class="hero"><h2>Piloti e moto</h2><p>La moto è generica: marca, modello e cilindrata sono sempre configurabili.</p>
-<div class="actions"><button class="btn btn-primary" onclick="openModal('riderModal')">+ Pilota</button><button class="btn btn-secondary" onclick="openModal('bikeModal')">+ Moto</button></div></div>
+<div class="hero"><h2>Anagrafiche</h2><p>Gestisci piloti, moto e circuiti utilizzati nelle giornate in pista.</p>
+<div class="actions">
+<button class="btn btn-primary" onclick="openModal('riderModal')">+ Pilota</button>
+<button class="btn btn-secondary" onclick="openModal('bikeModal')">+ Moto</button>
+<button class="btn btn-secondary" onclick="openModal('circuitModal')">+ Circuito</button>
+</div></div>
 <div class="card"><h2 class="section-title">Piloti</h2><div id="riders" class="list"></div></div>
 <div class="card"><h2 class="section-title">Moto</h2><div id="bikes" class="list"></div></div>
+<div class="card"><h2 class="section-title">Circuiti</h2><div id="circuitsList" class="list"></div></div>
 </section>
 
 <section id="days" class="screen">
@@ -275,28 +286,123 @@ body.chrono-locked .live-tile{
 <dialog id="bikeModal"><form method="dialog" onsubmit="saveBike(event)"><div class="modal-head"><strong>Nuova moto</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('bikeModal')">×</button></div><div class="modal-body form-grid">
 <div><label>Marca *</label><input id="bikeBrand" required></div><div><label>Modello *</label><input id="bikeModel" required></div><div><label>Cilindrata *</label><input id="bikeCc" required type="number"></div><div><label>Anno</label><input id="bikeYear" type="number"></div><div><label>Categoria</label><input id="bikeCategory"></div><div><label>Motore</label><input id="bikeEngine"></div><div><label>Tipo motore</label><select id="bikeStroke"><option>4T</option><option>2T</option><option>Elettrico</option></select></div><div><label>Ruote</label><input id="bikeWheels" placeholder='10"'></div><div class="full"><label>Configurazione/note</label><textarea id="bikeNotes"></textarea></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
 
-<dialog id="dayModal"><form method="dialog" onsubmit="saveDay(event)"><div class="modal-head"><strong>Nuova giornata</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('dayModal')">×</button></div><div class="modal-body form-grid">
-<div><label>Data *</label><input id="dayDate" type="date" required></div><div><label>Evento</label><select id="dayType"><option>Allenamento</option><option>Prove libere</option><option>Qualifica</option><option>Gara</option></select></div>
-<div><label>Pilota *</label><select id="dayRider" required></select></div><div><label>Moto *</label><select id="dayBike" required></select></div>
-<div class="full"><label>Circuito *</label><input id="dayTrack" required placeholder="Es. Viterbo"></div><div><label>Configurazione pista</label><input id="dayLayout" placeholder="Es. set 050"></div>
-<div><label>Temperatura aria °C</label><input id="dayAir" type="number" step=".1"></div><div><label>Temperatura asfalto °C</label><input id="dayAsphalt" type="number" step=".1"></div>
-<div><label>Meteo</label><select id="dayWeather"><option>Sole</option><option>Nuvoloso</option><option>Variabile</option><option>Pioggia</option></select></div><div><label>Obiettivo</label><input id="dayGoal" placeholder="Es. test rapporto"></div>
-<div class="full"><label>Note</label><textarea id="dayNotes"></textarea></div><div class="full actions"><button class="btn btn-primary">Inizia giornata</button></div></div></form></dialog>
+<dialog id="circuitModal"><form method="dialog" onsubmit="saveCircuit(event)">
+<div class="modal-head"><strong>Nuovo circuito</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('circuitModal')">×</button></div>
+<div class="modal-body form-grid">
+<div><label>Nome circuito *</label><input id="circuitName" required placeholder="Es. Circuito di Viterbo"></div>
+<div><label>Località</label><input id="circuitLocation" placeholder="Es. Viterbo"></div>
+<div><label>Configurazione</label><input id="circuitLayout" placeholder="Es. Lunga / Kart / Set 050"></div>
+<div><label>Lunghezza (m)</label><input id="circuitLength" type="number"></div>
+<div><label>Senso di marcia</label><select id="circuitDirection"><option value="">Non indicato</option><option>Orario</option><option>Antiorario</option></select></div>
+<div><label>Numero curve</label><input id="circuitCorners" type="number"></div>
+<div><label>Tipo</label><select id="circuitType"><option value="">Non indicato</option><option>Minimoto</option><option>MiniGP</option><option>Pit Bike</option><option>Kart</option><option>Motard</option><option>Altro</option></select></div>
+<div class="full"><label>Note</label><textarea id="circuitNotes"></textarea></div>
+<div class="full actions"><button class="btn btn-primary">Salva circuito</button></div>
+</div></form></dialog>
 
-<dialog id="sessionModal"><form method="dialog" onsubmit="saveSession(event)"><div class="modal-head"><strong>Nuovo turno manuale</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('sessionModal')">×</button></div><div class="modal-body form-grid">
-<div class="full"><label>Giornata *</label><select id="sessionDay" required></select></div><div><label>Tipo turno</label><select id="sessionType"><option>Libere</option><option>Qualifica</option><option>Warm-up</option><option>Gara 1</option><option>Gara 2</option></select></div><div><label>Numero turno</label><input id="sessionNumber" type="number" value="1"></div>
-<div><label>Orario indicativo</label><input id="sessionTime" type="time"></div><div><label>Giri</label><input id="sessionLaps" type="number"></div><div><label>Miglior giro</label><input id="sessionBest" placeholder="1:01.900"></div>
-<div><label>Pignone</label><input id="sessionFrontGear" type="number"></div><div><label>Corona</label><input id="sessionRearGear" type="number"></div><div><label>SAG anteriore</label><input id="sessionSagF" type="number" step=".1"></div><div><label>SAG posteriore</label><input id="sessionSagR" type="number" step=".1"></div>
-<div><label>Gomma anteriore</label><select id="sessionTireF"></select></div><div><label>Gomma posteriore</label><select id="sessionTireR"></select></div>
-<div class="full"><label>Feedback pilota</label><textarea id="sessionFeedback"></textarea></div><div class="full"><label>Modifiche</label><textarea id="sessionChanges"></textarea></div><div class="full actions"><button class="btn btn-primary">Salva turno</button></div></div></form></dialog>
+<dialog id="dayModal"><form method="dialog" onsubmit="saveDay(event)">
+<div class="modal-head"><strong>Nuova giornata</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('dayModal')">×</button></div>
+<div class="modal-body form-grid">
+<div><label>Data automatica</label><input id="dayDateDisplay" readonly></div>
+<div><label>Ora automatica</label><input id="dayTimeDisplay" readonly></div>
+<div class="full"><label>Evento</label><select id="dayType">
+<option>Allenamento</option><option>Test</option><option>Prove libere</option><option>Qualifica</option><option>Gara</option>
+</select></div>
+<div><label>Pilota *</label><select id="dayRider" required></select></div>
+<div><label>Moto *</label><select id="dayBike" required></select></div>
+<div class="full"><label>Circuito *</label><select id="dayCircuit" required></select>
+<div class="actions" style="margin-top:7px"><button type="button" class="btn btn-secondary btn-small" onclick="openCircuitFromDay()">+ Crea nuovo circuito</button></div></div>
+<div class="full"><label>Obiettivo</label><input id="dayGoal" placeholder="Es. test rapporto, assetto, allenamento pilota"></div>
+<div class="full"><label>Note</label><textarea id="dayNotes"></textarea></div>
+<div class="full actions"><button class="btn btn-primary">Inizia giornata</button></div>
+</div></form></dialog>
+
+<dialog id="sessionModal"><form method="dialog" onsubmit="saveSession(event)">
+<div class="modal-head"><strong>Nuovo turno</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('sessionModal')">×</button></div>
+<div class="modal-body form-grid">
+
+<div class="form-section"><h3>Dati generali</h3></div>
+<div class="full"><label>Giornata *</label><select id="sessionDay" required></select></div>
+<div><label>Tipo turno</label><select id="sessionType">
+<option>Libere</option><option>Test</option><option>Qualifica</option><option>Warm-up</option><option>Gara 1</option><option>Gara 2</option>
+</select></div>
+<div><label>Numero turno</label><input id="sessionNumber" type="number" min="1" value="1"></div>
+<div><label>Orario automatico</label><input id="sessionTimeDisplay" readonly></div>
+<div><label>Pignone</label><input id="sessionFrontGear" type="number"></div>
+<div><label>Corona</label><input id="sessionRearGear" type="number"></div>
+
+<div class="form-section"><h3>Dati meteo da Prisma</h3><p>Scatta o carica una foto e inserisci i valori letti.</p></div>
+<div class="full"><label>Foto Prisma</label><input id="sessionPrismaPhoto" type="file" accept="image/*" capture="environment" onchange="previewPrismaPhoto(event)"><img id="sessionPrismaPreview" class="preview-photo" alt="Anteprima Prisma"></div>
+<div><label>Temperatura aria °C</label><input id="sessionAirTemp" type="number" step="0.1"></div>
+<div><label>Temperatura asfalto °C</label><input id="sessionTrackTemp" type="number" step="0.1"></div>
+<div><label>Umidità %</label><input id="sessionHumidity" type="number" step="0.1"></div>
+<div><label>Pressione atmosferica hPa</label><input id="sessionAtmosphericPressure" type="number" step="0.1"></div>
+<div><label>Vento km/h</label><input id="sessionWindSpeed" type="number" step="0.1"></div>
+<div><label>Condizioni</label><select id="sessionWeather"><option>Sole</option><option>Nuvoloso</option><option>Variabile</option><option>Pioggia</option></select></div>
+
+<div class="form-section"><h3>Carburazione</h3></div>
+<div><label>Getto minimo</label><input id="sessionPilotJet"></div>
+<div><label>Getto massimo</label><input id="sessionMainJet"></div>
+<div><label>Tacca spillo</label><input id="sessionNeedleClip"></div>
+<div><label>Vite aria</label><input id="sessionAirScrew"></div>
+
+<div class="form-section"><h3>Sonda gas di scarico</h3></div>
+<div><label>Temperatura massima °C</label><input id="sessionEgtMax" type="number" step="0.1"></div>
+<div><label>Temperatura minima °C</label><input id="sessionEgtMin" type="number" step="0.1"></div>
+
+<div class="form-section"><h3>Gomme</h3></div>
+<div><label>Marca</label><input id="sessionTireBrand"></div>
+<div><label>Tipologia</label><input id="sessionTireType" placeholder="Es. slick"></div>
+<div><label>Mescola</label><input id="sessionTireCompound"></div>
+<div><label>Temperatura termo anteriore °C</label><input id="sessionFrontWarmerTemp" type="number" step="0.1"></div>
+<div><label>Pressione anteriore con termo</label><input id="sessionFrontWarmerPressure" type="number" step="0.01"></div>
+<div><label>Temperatura termo posteriore °C</label><input id="sessionRearWarmerTemp" type="number" step="0.1"></div>
+<div><label>Pressione posteriore con termo</label><input id="sessionRearWarmerPressure" type="number" step="0.01"></div>
+<div><label>Temperatura fine turno anteriore °C</label><input id="sessionFrontEndTemp" type="number" step="0.1"></div>
+<div><label>Pressione anteriore fine turno</label><input id="sessionFrontEndPressure" type="number" step="0.01"></div>
+<div><label>Temperatura fine turno posteriore °C</label><input id="sessionRearEndTemp" type="number" step="0.1"></div>
+<div><label>Pressione posteriore fine turno</label><input id="sessionRearEndPressure" type="number" step="0.01"></div>
+
+<div class="form-section"><h3>Forcelle</h3></div>
+<div><label>Sfilamento (tacche)</label><input id="sessionForkHeight" step="0.1"></div>
+<div><label>SAG anteriore mm</label><input id="sessionSagF" type="number" step="0.1"></div>
+<div><label>Precarico molla</label><input id="sessionForkPreload" step="0.1"></div>
+<div><label>Compressione</label><input id="sessionForkCompression"></div>
+<div><label>Ritorno</label><input id="sessionForkRebound"></div>
+
+<div class="form-section"><h3>Mono</h3></div>
+<div><label>SAG posteriore mm</label><input id="sessionSagR" type="number" step="0.1"></div>
+<div><label>Distanziale mm</label><input id="sessionShockSpacer" type="number" step="0.1"></div>
+<div><label>Compressione</label><input id="sessionShockCompression"></div>
+<div><label>Ritorno</label><input id="sessionShockRebound"></div>
+
+<div class="form-section"><h3>Prestazione e note</h3></div>
+<div><label>Giro migliore</label><input id="sessionBest" placeholder="Es. 1:01.740"></div>
+<div><label>Velocità massima km/h</label><input id="sessionMaxSpeed" type="number" step="0.1"></div>
+<div class="full"><label>Note</label><textarea id="sessionFeedback"></textarea></div>
+
+<div class="full actions"><button class="btn btn-primary">Salva turno</button></div>
+</div></form></dialog>
 
 <dialog id="tireModal"><form method="dialog" onsubmit="saveTire(event)"><div class="modal-head"><strong>Nuova gomma</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('tireModal')">×</button></div><div class="modal-body form-grid">
 <div><label>Codice *</label><input id="tireCode" required></div><div><label>Posizione</label><select id="tirePosition"><option>Anteriore</option><option>Posteriore</option></select></div><div><label>Marca *</label><input id="tireBrand" required></div><div><label>Modello/mescola</label><input id="tireModel"></div><div><label>Misura</label><input id="tireSize"></div><div><label>Giri iniziali</label><input id="tireInitialLaps" type="number" value="0"></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
 
 <script>
 const KEY='raceSetup_v02';
-let db=JSON.parse(localStorage.getItem(KEY)||'{"riders":[],"bikes":[],"days":[],"sessions":[],"tires":[],"adaImports":[],"chronoSessions":[]}');
+let db=JSON.parse(localStorage.getItem(KEY)||'{"riders":[],"bikes":[],"circuits":[],"days":[],"sessions":[],"tires":[],"adaImports":[],"chronoSessions":[]}');
+db.circuits=db.circuits||[];
 db.chronoSessions=db.chronoSessions||[];
+// Migra automaticamente i circuiti scritti nelle giornate delle versioni precedenti.
+db.days.forEach(d=>{
+  if(!d.circuitId && d.track){
+    let existing=db.circuits.find(c=>c.name.toLowerCase()===String(d.track).toLowerCase() && String(c.layout||'')===String(d.layout||''));
+    if(!existing){
+      existing={id:uid(),name:d.track,location:'',layout:d.layout||'',length:'',direction:'',corners:'',type:'',notes:''};
+      db.circuits.push(existing);
+    }
+    d.circuitId=existing.id;
+  }
+});
 db.chronoSessions.forEach(s=>{if(!s.id)s.id=uid()});
 let chrono={active:false,running:false,startAt:0,elapsed:0,raf:null,pilots:[],lastEvent:null};
 let pendingImport=null;
@@ -311,26 +417,170 @@ document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>go(b.dataset.scre
 function openModal(id){
   fillSelects();
   const dialog=$(id);
+  if(id==='dayModal')setAutomaticDayDateTime();
+  if(id==='sessionModal'){pendingPrismaPhoto='';const img=$('sessionPrismaPreview');if(img){img.src='';img.style.display='none'}}
+  if(id==='sessionModal'){setAutomaticSessionTime();pendingPrismaPhoto='';const img=$('sessionPrismaPreview');if(img){img.src='';img.style.display='none'}}
   if(dialog && !dialog.open)dialog.showModal();
 }
 function closeModal(id){
   const dialog=$(id);
   if(!dialog)return;
   if(dialog.open)dialog.close();
+  const returnToDay=id==='circuitModal' && dialog.dataset.returnToDay==='1';
+  delete dialog.dataset.returnToDay;
   const form=dialog.querySelector('form');
   if(form)form.reset();
-  if(id==='dayModal')dayDate.valueAsDate=new Date();
+  if(id==='dayModal')setAutomaticDayDateTime();
+  if(id==='sessionModal'){setAutomaticSessionTime();pendingPrismaPhoto='';const img=$('sessionPrismaPreview');if(img){img.src='';img.style.display='none'}}
   fillSelects();
+  if(returnToDay)setTimeout(()=>openModal('dayModal'),50);
 }
 function resetLater(f){setTimeout(()=>f.reset(),50)}
 function empty(t){return `<div class="empty">${t}</div>`}
 function get(type,id){return db[type].find(x=>x.id===id)}
+function circuitLabel(c){
+  if(!c)return 'Circuito non indicato';
+  return `${c.name}${c.layout?' · '+c.layout:''}${c.location?' ('+c.location+')':''}`;
+}
+function dayCircuit(d){return get('circuits',d.circuitId)}
+function dayTrackName(d){
+  const c=dayCircuit(d);
+  return c?`${c.name}${c.layout?' · '+c.layout:''}`:(d.track||'Circuito');
+}
+let pendingPrismaPhoto='';
+function setAutomaticSessionTime(){
+  const now=new Date();
+  if($('sessionTimeDisplay'))$('sessionTimeDisplay').value=now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+}
+function previewPrismaPhoto(event){
+  const file=event.target.files?.[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    pendingPrismaPhoto=reader.result;
+    const img=$('sessionPrismaPreview');
+    img.src=pendingPrismaPhoto;
+    img.style.display='block';
+  };
+  reader.readAsDataURL(file);
+}
+function setAutomaticDayDateTime(){
+  const now=new Date();
+  if($('dayDateDisplay'))$('dayDateDisplay').value=now.toLocaleDateString('it-IT');
+  if($('dayTimeDisplay'))$('dayTimeDisplay').value=now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+}
 function del(type,id){if(confirm('Eliminare questo elemento?')){db[type]=db[type].filter(x=>x.id!==id);save()}}
 
 function saveRider(e){e.preventDefault();db.riders.push({id:uid(),name:riderName.value,number:riderNumber.value,category:riderCategory.value,weight:riderWeight.value,raceWeight:riderRaceWeight.value});save();riderModal.close();resetLater(e.target)}
 function saveBike(e){e.preventDefault();db.bikes.push({id:uid(),brand:bikeBrand.value,model:bikeModel.value,cc:bikeCc.value,year:bikeYear.value,category:bikeCategory.value,engine:bikeEngine.value,stroke:bikeStroke.value,wheels:bikeWheels.value,notes:bikeNotes.value});save();bikeModal.close();resetLater(e.target)}
-function saveDay(e){e.preventDefault();db.days.push({id:uid(),date:dayDate.value,type:dayType.value,riderId:dayRider.value,bikeId:dayBike.value,track:dayTrack.value,layout:dayLayout.value,air:dayAir.value,asphalt:dayAsphalt.value,weather:dayWeather.value,goal:dayGoal.value,notes:dayNotes.value});save();dayModal.close();resetLater(e.target)}
-function saveSession(e){e.preventDefault();db.sessions.push({id:uid(),dayId:sessionDay.value,type:sessionType.value,number:sessionNumber.value,time:sessionTime.value,laps:Number(sessionLaps.value||0),manualBest:sessionBest.value,officialBest:'',source:'Manuale',frontGear:sessionFrontGear.value,rearGear:sessionRearGear.value,sagF:sessionSagF.value,sagR:sessionSagR.value,tireF:sessionTireF.value,tireR:sessionTireR.value,feedback:sessionFeedback.value,changes:sessionChanges.value,adaId:null});save();sessionModal.close();resetLater(e.target)}
+function saveCircuit(e){
+  e.preventDefault();
+  const c={id:uid(),name:circuitName.value.trim(),location:circuitLocation.value.trim(),layout:circuitLayout.value.trim(),length:circuitLength.value,direction:circuitDirection.value,corners:circuitCorners.value,type:circuitType.value,notes:circuitNotes.value.trim()};
+  db.circuits.push(c);
+  const returnToDay=circuitModal.dataset.returnToDay==='1';
+  delete circuitModal.dataset.returnToDay;
+  save();
+  circuitModal.close();
+  resetLater(e.target);
+  fillSelects();
+  if(returnToDay){
+    setTimeout(()=>{
+      openModal('dayModal');
+      dayCircuit.value=c.id;
+    },50);
+  }
+}
+function openCircuitFromDay(){
+  if(dayModal.open)dayModal.close();
+  openModal('circuitModal');
+  circuitModal.dataset.returnToDay='1';
+}
+function saveDay(e){
+  e.preventDefault();
+  const now=new Date();
+  const circuit=get('circuits',dayCircuit.value);
+  db.days.push({
+    id:uid(),
+    date:now.toISOString().slice(0,10),
+    time:now.toTimeString().slice(0,5),
+    createdAt:now.toISOString(),
+    type:dayType.value,
+    riderId:dayRider.value,
+    bikeId:dayBike.value,
+    circuitId:dayCircuit.value,
+    track:circuit?.name||'',
+    layout:circuit?.layout||'',
+    goal:dayGoal.value,
+    notes:dayNotes.value
+  });
+  save();dayModal.close();resetLater(e.target);setAutomaticDayDateTime();
+}
+function saveSession(e){
+  e.preventDefault();
+  const now=new Date();
+  db.sessions.push({
+    id:uid(),
+    dayId:sessionDay.value,
+    type:sessionType.value,
+    number:sessionNumber.value,
+    time:now.toTimeString().slice(0,5),
+    createdAt:now.toISOString(),
+
+    frontGear:sessionFrontGear.value,
+    rearGear:sessionRearGear.value,
+
+    prismaPhoto:pendingPrismaPhoto,
+    airTemp:sessionAirTemp.value,
+    trackTemp:sessionTrackTemp.value,
+    humidity:sessionHumidity.value,
+    atmosphericPressure:sessionAtmosphericPressure.value,
+    windSpeed:sessionWindSpeed.value,
+    weather:sessionWeather.value,
+
+    pilotJet:sessionPilotJet.value,
+    mainJet:sessionMainJet.value,
+    needleClip:sessionNeedleClip.value,
+    airScrew:sessionAirScrew.value,
+
+    egtMax:sessionEgtMax.value,
+    egtMin:sessionEgtMin.value,
+
+    tireBrand:sessionTireBrand.value,
+    tireType:sessionTireType.value,
+    tireCompound:sessionTireCompound.value,
+    frontWarmerTemp:sessionFrontWarmerTemp.value,
+    frontWarmerPressure:sessionFrontWarmerPressure.value,
+    rearWarmerTemp:sessionRearWarmerTemp.value,
+    rearWarmerPressure:sessionRearWarmerPressure.value,
+    frontEndTemp:sessionFrontEndTemp.value,
+    frontEndPressure:sessionFrontEndPressure.value,
+    rearEndTemp:sessionRearEndTemp.value,
+    rearEndPressure:sessionRearEndPressure.value,
+
+    forkHeight:sessionForkHeight.value,
+    sagF:sessionSagF.value,
+    forkPreload:sessionForkPreload.value,
+    forkCompression:sessionForkCompression.value,
+    forkRebound:sessionForkRebound.value,
+
+    sagR:sessionSagR.value,
+    shockSpacer:sessionShockSpacer.value,
+    shockCompression:sessionShockCompression.value,
+    shockRebound:sessionShockRebound.value,
+
+    manualBest:sessionBest.value,
+    officialBest:'',
+    maxSpeed:sessionMaxSpeed.value,
+    source:'Manuale',
+    feedback:sessionFeedback.value,
+    changes:'',
+    adaId:null
+  });
+  save();
+  sessionModal.close();
+  pendingPrismaPhoto='';
+  resetLater(e.target);
+}
 function saveTire(e){e.preventDefault();db.tires.push({id:uid(),code:tireCode.value,position:tirePosition.value,brand:tireBrand.value,model:tireModel.value,size:tireSize.value,initialLaps:Number(tireInitialLaps.value||0)});save();tireModal.close();resetLater(e.target)}
 function fill(id,items,label,blank='Seleziona...'){let el=$(id);el.innerHTML=`<option value="">${blank}</option>`+items.map(x=>`<option value="${x.id}">${esc(label(x))}</option>`).join('')}
 function fillChronoTurns(){
@@ -344,20 +594,31 @@ function fillChronoTurns(){
 }
 function fillSelects(){
   const currentChronoDay=$('chronoDay')?.value||'';
-  fill('chronoDay',db.days,x=>`${fmtDate(x.date)} · ${x.track}`,'Nessuna giornata');
+  fill('chronoDay',db.days,x=>`${fmtDate(x.date)} · ${dayTrackName(x)}`,'Nessuna giornata');
   if(currentChronoDay && [...$('chronoDay').options].some(o=>o.value===currentChronoDay))$('chronoDay').value=currentChronoDay;
   fillChronoTurns();
   fill('dayRider',db.riders,x=>x.name);
   fill('dayBike',db.bikes,x=>`${x.brand} ${x.model} ${x.cc} cc`);
-  fill('sessionDay',db.days,x=>`${fmtDate(x.date)} · ${x.track}`);
-  fill('sessionTireF',db.tires.filter(x=>x.position==='Anteriore'),x=>`${x.code} · ${x.brand} ${x.model}`,'Nessuna');
-  fill('sessionTireR',db.tires.filter(x=>x.position==='Posteriore'),x=>`${x.code} · ${x.brand} ${x.model}`,'Nessuna');
+  fill('dayCircuit',db.circuits,c=>circuitLabel(c));
+  fill('sessionDay',db.days,x=>`${fmtDate(x.date)} · ${dayTrackName(x)}`);
+}
+function deleteCircuit(id){
+  const used=db.days.some(d=>d.circuitId===id);
+  if(used){
+    alert('Questo circuito è già collegato a una giornata e non può essere eliminato.');
+    return;
+  }
+  if(confirm('Eliminare questo circuito?')){
+    db.circuits=db.circuits.filter(c=>c.id!==id);
+    save();
+  }
 }
 function tireLaps(t){return Number(t.initialLaps||0)+db.sessions.filter(s=>s.tireF===t.id||s.tireR===t.id).reduce((a,s)=>a+Number(s.laps||0),0)}
 function render(){
-$('stats').innerHTML=[['Piloti',db.riders.length],['Moto',db.bikes.length],['Turni',db.sessions.length],['Import ADA',db.adaImports.length]].map(x=>`<div class="stat"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');
+$('stats').innerHTML=[['Piloti',db.riders.length],['Moto',db.bikes.length],['Circuiti',db.circuits.length],['Turni',db.sessions.length]].map(x=>`<div class="stat"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');
 $('riders').innerHTML=db.riders.length?db.riders.map(r=>`<div class="item"><div class="row"><div><h3>${esc(r.name)}</h3><p>#${esc(r.number||'—')} · ${esc(r.category||'')}</p></div><button class="btn btn-danger btn-small" onclick="del('riders','${r.id}')">Elimina</button></div></div>`).join(''):empty('Nessun pilota');
 $('bikes').innerHTML=db.bikes.length?db.bikes.map(b=>`<div class="item"><div class="row"><div><h3>${esc(b.brand)} ${esc(b.model)} <span class="badge">${esc(b.cc)} cc</span></h3><p>${esc(b.stroke)} · ${esc(b.category||'')} · ${esc(b.wheels||'')}</p><p>${esc(b.notes||'')}</p></div><button class="btn btn-danger btn-small" onclick="del('bikes','${b.id}')">Elimina</button></div></div>`).join(''):empty('Nessuna moto');
+$('circuitsList').innerHTML=db.circuits.length?db.circuits.map(c=>`<div class="item"><div class="row"><div><h3>${esc(c.name)} ${c.layout?'<span class="badge">'+esc(c.layout)+'</span>':''}</h3><p>${esc(c.location||'Località non indicata')}${c.length?' · '+esc(c.length)+' m':''}${c.direction?' · '+esc(c.direction):''}</p><p>${esc(c.type||'')}${c.corners?' · '+esc(c.corners)+' curve':''}</p><p>${esc(c.notes||'')}</p></div><button class="btn btn-danger btn-small" onclick="deleteCircuit('${c.id}')">Elimina</button></div></div>`).join(''):empty('Nessun circuito');
 $('tiresList').innerHTML=db.tires.length?db.tires.map(t=>`<div class="item"><div class="row"><div><h3>${esc(t.code)} · ${esc(t.position)}</h3><p>${esc(t.brand)} ${esc(t.model||'')} · ${esc(t.size||'')}</p><p><strong>${tireLaps(t)} giri totali</strong></p></div><button class="btn btn-danger btn-small" onclick="del('tires','${t.id}')">Elimina</button></div></div>`).join(''):empty('Nessuna gomma');
 let sorted=[...db.days].sort((a,b)=>b.date.localeCompare(a.date));
 $('daysList').innerHTML=sorted.length?sorted.map(d=>dayCard(d)).join(''):empty('Nessuna giornata');
@@ -367,11 +628,11 @@ fillSelects()
 }
 function dayCard(d,compact=false){
 let r=get('riders',d.riderId),b=get('bikes',d.bikeId),ss=db.sessions.filter(s=>s.dayId===d.id);
-return `<div class="${compact?'item':'card'}"><div class="row"><div><h3>${fmtDate(d.date)} · ${esc(d.track)} ${d.layout?'<span class="badge">'+esc(d.layout)+'</span>':''}</h3><p>${esc(r?.name||'Pilota')} · ${esc(b?`${b.brand} ${b.model} ${b.cc} cc`:'Moto')} · ${esc(d.type)}</p></div><span class="badge gray">${ss.length} turni</span></div>${compact?'':`<div class="list" style="margin-top:10px">${ss.length?ss.map(sessionCard).join(''):empty('Nessun turno')}</div>`}</div>`
+return `<div class="${compact?'item':'card'}"><div class="row"><div><h3>${fmtDate(d.date)} · ${esc(dayTrackName(d))}</h3><p>${esc(r?.name||'Pilota')} · ${esc(b?`${b.brand} ${b.model} ${b.cc} cc`:'Moto')} · ${esc(d.type)}</p></div><span class="badge gray">${ss.length} turni</span></div>${compact?'':`<div class="list" style="margin-top:10px">${ss.length?ss.map(sessionCard).join(''):empty('Nessun turno')}</div>`}</div>`
 }
 function sessionCard(s){
 let best=s.officialBest||s.manualBest||'—';
-return `<div class="item"><div class="row"><div><h3>${esc(s.type)} ${esc(s.number)} <span class="badge ${s.source==='ADA'?'green':'gray'}">${esc(s.source)}</span></h3><p>${s.laps} giri · Best ${esc(best)} · Rapporto ${esc(s.frontGear||'—')}/${esc(s.rearGear||'—')}</p><p>${esc(s.feedback||'Nessun feedback')}</p></div>${s.adaId?`<button class="btn btn-secondary btn-small" onclick="showStoredImport('${s.adaId}')">Analisi</button>`:''}</div></div>`
+return `<div class="item"><div class="row"><div><h3>${esc(s.type)} ${esc(s.number)} <span class="badge ${s.source==='ADA'?'green':'gray'}">${esc(s.source)}</span></h3><p>Best ${esc(best)} · Vel. max ${esc(s.maxSpeed||'—')} km/h · Rapporto ${esc(s.frontGear||'—')}/${esc(s.rearGear||'—')}</p><p>${s.airTemp?'Aria '+esc(s.airTemp)+' °C · ':''}${s.trackTemp?'Asfalto '+esc(s.trackTemp)+' °C · ':''}${s.tireBrand?esc(s.tireBrand)+' '+esc(s.tireCompound||''):''}</p><p>${esc(s.feedback||'Nessuna nota')}</p></div>${s.adaId?`<button class="btn btn-secondary btn-small" onclick="showStoredImport('${s.adaId}')">Analisi</button>`:''}</div></div>`
 }
 
 
@@ -446,7 +707,7 @@ function chronoSave(){
     dayId:did,
     turnId:linkedTurnId,
     date:d?.date||new Date().toISOString().slice(0,10),
-    track:d?.track||'',
+    track:d?dayTrackName(d):'',
     duration:chrono.elapsed,
     results
   });
@@ -593,7 +854,7 @@ function renderPreview(x){
 }
 function showAssociate(){
  let s=pendingImport.summary, candidates=db.sessions.map(x=>{let d=get('days',x.dayId);return {s:x,d,score:(d?.track||'').toLowerCase().includes(s.track.split(' ')[0].toLowerCase())?2:0}});
- $('associate').innerHTML=`<div class="item" style="margin-top:13px"><h3>Associazione al turno</h3><label>Turno esistente</label><select id="assocSession"><option value="">Crea un nuovo turno ADA</option>${candidates.map(c=>`<option value="${c.s.id}">${fmtDate(c.d?.date)} · ${esc(c.d?.track||'')} · ${esc(c.s.type)} ${esc(c.s.number)} · manuale ${esc(c.s.manualBest||'—')}</option>`).join('')}</select><label>Giornata per nuovo turno</label><select id="assocDay"><option value="">Seleziona giornata</option>${db.days.map(d=>`<option value="${d.id}">${fmtDate(d.date)} · ${esc(d.track)}</option>`).join('')}</select><div class="actions"><button class="btn btn-primary" onclick="confirmImport()">Importa e usa i dati ADA</button></div><p class="muted">I tempi manuali non saranno cancellati: resteranno memorizzati come riferimento originale.</p></div>`
+ $('associate').innerHTML=`<div class="item" style="margin-top:13px"><h3>Associazione al turno</h3><label>Turno esistente</label><select id="assocSession"><option value="">Crea un nuovo turno ADA</option>${candidates.map(c=>`<option value="${c.s.id}">${fmtDate(c.d?.date)} · ${esc(c.d?dayTrackName(c.d):'')} · ${esc(c.s.type)} ${esc(c.s.number)} · manuale ${esc(c.s.manualBest||'—')}</option>`).join('')}</select><label>Giornata per nuovo turno</label><select id="assocDay"><option value="">Seleziona giornata</option>${db.days.map(d=>`<option value="${d.id}">${fmtDate(d.date)} · ${esc(dayTrackName(d))}</option>`).join('')}</select><div class="actions"><button class="btn btn-primary" onclick="confirmImport()">Importa e usa i dati ADA</button></div><p class="muted">I tempi manuali non saranno cancellati: resteranno memorizzati come riferimento originale.</p></div>`
 }
 function confirmImport(){
  let sid=$('assocSession')?.value,did=$('assocDay')?.value,s=pendingImport.summary,stored=JSON.parse(JSON.stringify(pendingImport));
@@ -637,6 +898,6 @@ document.querySelectorAll('dialog').forEach(dialog=>{
   });
 });
 
-dayDate.valueAsDate=new Date();buildNameFields();render();
+setAutomaticDayDateTime();buildNameFields();render();
 </script>
 </body></html>
