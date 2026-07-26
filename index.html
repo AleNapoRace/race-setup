@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v0.5</title>
+<title>Race Setup v0.6</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -97,13 +97,52 @@ canvas{width:100%;height:250px;border:1px solid var(--line);border-radius:14px;b
 .chrono-controls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .chrono-hidden{display:none!important}
 .install-note{background:#eef5ff;border-left:4px solid var(--blue);border-radius:10px;padding:11px;font-size:13px;margin-top:10px}
+
+body.chrono-focus header,body.chrono-focus nav,body.chrono-focus main>section:not(#chrono){display:none!important}
+body.chrono-focus main{padding:0}
+body.chrono-focus .app{max-width:none;padding-bottom:0}
+body.chrono-focus #chrono{display:block!important;min-height:100vh}
+body.chrono-focus #chrono>.hero,body.chrono-focus #chronoSetup,body.chrono-focus #chronoHistoryCard{display:none!important}
+.live-shell{min-height:100vh;display:flex;flex-direction:column;padding:9px}
+.live-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 3px 9px}
+.live-clock{font-weight:900;font-variant-numeric:tabular-nums}
+.live-grid{flex:1;display:grid;gap:7px}
+.live-grid[data-count="1"]{grid-template-columns:1fr}
+.live-grid[data-count="2"]{grid-template-columns:repeat(2,1fr)}
+.live-grid[data-count="3"],.live-grid[data-count="4"],.live-grid[data-count="5"],.live-grid[data-count="6"],.live-grid[data-count="7"],.live-grid[data-count="8"]{grid-template-columns:repeat(2,1fr)}
+.live-tile{position:relative;background:#fff;border:3px solid #d7dde3;border-radius:19px;padding:11px;display:flex;flex-direction:column;justify-content:space-between;min-height:0;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.live-tile:active{transform:scale(.988)}
+.live-tile.flash{background:#fff7c7;border-color:#e3b800}
+.live-tile.bestflash{background:#e6f8ef;border-color:#16885f}
+.live-name{font-size:clamp(19px,5vw,34px);font-weight:950;line-height:1;padding-right:30px;overflow-wrap:anywhere}
+.live-main{text-align:center}
+.live-label{font-size:10px;color:#6d7680;font-weight:900}
+.live-last{font-size:clamp(28px,8vw,55px);font-weight:950;font-variant-numeric:tabular-nums;line-height:1.08;margin:5px 0}
+.live-gap{font-size:clamp(14px,4vw,22px);font-weight:900}
+.live-gap.best{color:#16885f}
+.live-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.live-stat{background:#f5f7f9;border:1px solid #dfe4e9;border-radius:10px;padding:7px;text-align:center}
+.live-stat span{display:block;font-size:9px;color:#6d7680;font-weight:800;text-transform:uppercase}
+.live-stat strong{font-size:clamp(15px,4vw,23px);font-variant-numeric:tabular-nums}
+.live-menu{position:absolute;right:6px;top:6px;border:0;border-radius:999px;width:30px;height:30px;font-weight:900}
+.live-end{padding-top:7px}
+.live-end button{width:100%;min-height:47px}
+.analysis-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}
+.analysis-kpi{background:#fff;border:1px solid #dfe4e9;border-radius:12px;padding:9px;text-align:center}
+.analysis-kpi span{display:block;font-size:9px;color:#6d7680;text-transform:uppercase;font-weight:800}
+.analysis-kpi strong{font-size:18px;font-variant-numeric:tabular-nums}
+.lap-invalid{opacity:.42;text-decoration:line-through}
+.lap-best{background:#e6f8ef;font-weight:900}
+.lap-click{cursor:pointer}
+@media(max-width:700px){.analysis-grid{grid-template-columns:repeat(2,1fr)}}
+
 @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.chrono-setup,.name-fields{grid-template-columns:1fr}.pilot-tile{min-height:175px;padding:11px}.pilot-name{font-size:19px}.pilot-current{font-size:25px}.form-grid,.summary{grid-template-columns:1fr}.full{grid-column:auto}.app{padding-bottom:100px}table{font-size:12px}th,td{padding:7px 5px}}
 </style>
 </head>
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v0.5 · cronometro a riquadri multipilota</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v0.6 · crono full screen e analisi</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -130,36 +169,29 @@ canvas{width:100%;height:250px;border:1px solid var(--line);border-radius:14px;b
 
 
 <section id="chrono" class="screen">
-<div class="hero"><h2>Cronometro multipilota</h2><p>Lo schermo si divide in un riquadro per ogni pilota. Tocca direttamente il pilota a ogni passaggio.</p></div>
-
+<div class="hero"><h2>Cronometro multipilota</h2><p>Durante la sessione rimangono soltanto i riquadri dei piloti.</p></div>
 <div id="chronoSetup" class="card">
-<h2 class="section-title">Prepara la sessione</h2>
+<h2 class="section-title">Nuova sessione</h2>
 <div class="chrono-setup">
 <div><label>Numero piloti</label><select id="chronoCount" onchange="buildNameFields()">
 <option value="1">1 pilota</option><option value="2" selected>2 piloti</option><option value="3">3 piloti</option><option value="4">4 piloti</option><option value="5">5 piloti</option><option value="6">6 piloti</option><option value="7">7 piloti</option><option value="8">8 piloti</option>
 </select></div>
-<div><label>Nome sessione</label><input id="chronoName" value="Prove libere" placeholder="Es. Qualifica 1"></div>
+<div><label>Nome sessione</label><input id="chronoName" value="Prove libere"></div>
 <div class="full"><label>Giornata da associare</label><select id="chronoDay"></select></div>
 </div>
-<label>Nomi piloti</label>
-<div id="chronoNameFields" class="name-fields"></div>
+<label>Nomi piloti</label><div id="chronoNameFields" class="name-fields"></div>
 <div class="actions"><button class="btn btn-primary" onclick="prepareChrono()">AVVIA SESSIONE</button></div>
-<div class="install-note">Il primo tocco sul riquadro di un pilota registra il suo primo passaggio; dai tocchi successivi vengono calcolati i giri uno dopo l'altro.</div>
+<div class="install-note">Primo tocco: primo passaggio. Dal secondo tocco vengono calcolati i giri.</div>
 </div>
-
 <div id="chronoLive" class="chrono-hidden">
-<div class="card">
-<div class="chrono-top"><div><strong id="liveSessionName">Sessione</strong><p class="muted">Tocca un riquadro a ogni passaggio sul traguardo</p></div><div id="sessionClock" class="session-clock">00:00.000</div></div>
-<div id="chronoGrid" class="chrono-grid"></div>
-<div class="chrono-controls">
-<button class="btn btn-secondary" onclick="chronoAddPilot()">+ Pilota</button>
-<button class="btn btn-danger" onclick="chronoEnd()">Fine sessione</button>
-<button class="btn btn-blue" onclick="chronoSave()">Salva</button>
+<div class="live-shell">
+<div class="live-head"><div><strong id="liveSessionName">Sessione</strong><div class="muted">Tocca il pilota a ogni passaggio</div></div><div id="sessionClock" class="live-clock">00:00.000</div></div>
+<div id="chronoGrid" class="live-grid"></div>
+<div class="live-end"><button class="btn btn-danger" onclick="chronoEnd()">TERMINA SESSIONE</button></div>
 </div>
 </div>
-</div>
-
-<div class="card"><h2 class="section-title">Sessioni salvate</h2><div id="chronoHistory" class="list"></div></div>
+<div id="chronoAnalysis" class="chrono-hidden"></div>
+<div id="chronoHistoryCard" class="card"><h2 class="section-title">Sessioni salvate</h2><div id="chronoHistory" class="list"></div></div>
 </section>
 
 <section id="import" class="screen">
@@ -265,100 +297,24 @@ return `<div class="item"><div class="row"><div><h3>${esc(s.type)} ${esc(s.numbe
 }
 
 
-function chronoFormat(ms){
- ms=Math.max(0,Math.floor(ms||0));let m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000),x=ms%1000;
- return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(x).padStart(3,'0')}`
-}
+function chronoFormat(ms){ms=Math.max(0,Math.floor(ms||0));let m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000),x=ms%1000;return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(x).padStart(3,'0')}`}
 function lapFormat(ms){return chronoFormat(ms).replace(/^00:/,'')}
 function chronoNow(){return chrono.running?(performance.now()-chrono.startAt+chrono.elapsed):chrono.elapsed}
-function buildNameFields(){
- let count=Number($('chronoCount')?.value||2),box=$('chronoNameFields');if(!box)return;
- let old=[...box.querySelectorAll('input')].map(x=>x.value);
- box.innerHTML=Array.from({length:count},(_,i)=>`<div><input id="chronoName${i}" value="${esc(old[i]||'')}" placeholder="Nome pilota ${i+1}" autocomplete="off"></div>`).join('')
-}
-function prepareChrono(){
- let count=Number($('chronoCount').value),names=[];
- for(let i=0;i<count;i++){let n=$(`chronoName${i}`).value.trim();if(!n){alert(`Inserisci il nome del pilota ${i+1}.`);return}names.push(n)}
- chrono={active:true,running:true,startAt:performance.now(),elapsed:0,raf:null,lastEvent:null,pilots:names.map((name,i)=>({id:uid(),name,lastPass:null,laps:[],flash:'',paused:false}))};
- $('chronoSetup').classList.add('chrono-hidden');$('chronoLive').classList.remove('chrono-hidden');$('liveSessionName').textContent=$('chronoName').value||'Sessione cronometrata';
- chronoTick();renderChrono()
-}
-function chronoTick(){
- if($('sessionClock'))$('sessionClock').textContent=chronoFormat(chronoNow());
- if(chrono.active){
-   chrono.pilots.forEach(p=>{
-     let el=$(`current-${p.id}`);
-     if(el&&!p.paused)el.textContent=p.lastPass===null?'TOCCA AL PASSAGGIO':lapFormat(chronoNow()-p.lastPass)
-   })
- }
- if(chrono.running)chrono.raf=requestAnimationFrame(chronoTick)
-}
-function tapPilot(id){
- if(!chrono.active||!chrono.running)return;
- let p=chrono.pilots.find(x=>x.id===id);if(!p||p.paused)return;
- let now=chronoNow();
- if(p.lastPass===null){
-   p.lastPass=now;p.flash='normal';chrono.lastEvent={type:'start',id};
- }else{
-   let lap=now-p.lastPass;p.lastPass=now;p.laps.push(lap);
-   let best=Math.min(...p.laps),isBest=lap===best;p.flash=isBest?'best':'normal';chrono.lastEvent={type:'lap',id,lap};
- }
- renderChrono();
- setTimeout(()=>{let q=chrono.pilots.find(x=>x.id===id);if(q){q.flash='';renderChrono()}},500)
-}
-function pilotMenu(ev,id){
- ev.stopPropagation();let p=chrono.pilots.find(x=>x.id===id);if(!p)return;
- let action=prompt(`${p.name}\n\nScrivi:\n1 = annulla ultimo giro\n2 = pausa/riprendi pilota\n3 = elimina pilota`);
- if(action==='1')undoPilot(id);else if(action==='2'){p.paused=!p.paused;renderChrono()}else if(action==='3'&&confirm(`Eliminare ${p.name} dalla sessione?`)){chrono.pilots=chrono.pilots.filter(x=>x.id!==id);renderChrono()}
-}
-function undoPilot(id){
- let p=chrono.pilots.find(x=>x.id===id);if(!p)return;
- if(p.laps.length){p.laps.pop();p.lastPass=p.laps.reduce((a,x)=>a+x,0)}
- else if(p.lastPass!==null)p.lastPass=null;
- renderChrono()
-}
-function chronoAddPilot(){
- let name=prompt('Nome del nuovo pilota:');if(!name?.trim())return;
- chrono.pilots.push({id:uid(),name:name.trim(),lastPass:null,laps:[],flash:'',paused:false});renderChrono()
-}
-function chronoEnd(){
- if(!chrono.active)return;
- if(!confirm('Terminare la sessione? Potrai ancora salvarla.'))return;
- chrono.elapsed=chronoNow();chrono.running=false;cancelAnimationFrame(chrono.raf);renderChrono()
-}
-function chronoNew(){
- chrono={active:false,running:false,startAt:0,elapsed:0,raf:null,pilots:[],lastEvent:null};
- $('chronoSetup').classList.remove('chrono-hidden');$('chronoLive').classList.add('chrono-hidden');buildNameFields();renderChrono()
-}
-function renderChrono(){
- let grid=$('chronoGrid');
- if(grid&&chrono.active){
-   grid.dataset.count=String(chrono.pilots.length);
-   grid.innerHTML=chrono.pilots.map(p=>{
-     let last=p.laps.at(-1)||0,best=p.laps.length?Math.min(...p.laps):0,gap=last&&best?last-best:0;
-     return `<div class="pilot-tile ${p.flash==='best'?'best-flash':p.flash?'flash':''}" onclick="tapPilot('${p.id}')">
-       <button class="tile-menu" onclick="pilotMenu(event,'${p.id}')">⋯</button>
-       <div><div class="pilot-name">${esc(p.name)}</div><div id="current-${p.id}" class="pilot-current ${p.lastPass===null?'waiting':''}">${p.paused?'IN PAUSA':p.lastPass===null?'TOCCA AL PASSAGGIO':lapFormat(chronoNow()-p.lastPass)}</div></div>
-       <div><div class="pilot-data"><div><span>Ultimo</span><strong>${last?lapFormat(last):'—'}</strong></div><div><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div><span>Giri</span><strong>${p.laps.length}</strong></div></div><div class="tap-hint">${p.paused?'PILOTA IN PAUSA':'TOCCA TUTTO IL RIQUADRO = GIRO'}</div></div>
-     </div>`
-   }).join('')
- }
- let hist=$('chronoHistory');
- if(hist)hist.innerHTML=db.chronoSessions.length?[...db.chronoSessions].reverse().map(c=>`<div class="item"><h3>${esc(c.name)}</h3><p>${fmtDate(c.date)} · ${esc(c.track||'Senza giornata')} · durata ${chronoFormat(c.duration)}</p><p>${c.results.map(x=>`${esc(x.name)}: ${x.laps.length} giri, best ${x.best?lapFormat(x.best):'—'}`).join(' · ')}</p></div>`).join(''):empty('Nessuna sessione cronometrata salvata.')
-}
-function chronoSave(){
- if(!chrono.active){alert('Avvia prima una sessione.');return}
- if(chrono.running)chronoEnd();
- let results=chrono.pilots.map(p=>({name:p.name,laps:[...p.laps],best:p.laps.length?Math.min(...p.laps):0})).filter(x=>x.laps.length||x.name);
- let did=$('chronoDay').value,d=get('days',did);
- let rec={id:uid(),name:$('chronoName').value||'Sessione cronometrata',dayId:did,date:d?.date||new Date().toISOString().slice(0,10),track:d?.track||'',duration:chrono.elapsed,results,createdAt:new Date().toISOString()};
- db.chronoSessions.push(rec);
- if(did&&results[0]?.laps.length){
-   let main=results[0];
-   db.sessions.push({id:uid(),dayId:did,type:rec.name,number:db.sessions.filter(x=>x.dayId===did).length+1,time:new Date().toTimeString().slice(0,5),laps:main.laps.length,manualBest:main.best?lapFormat(main.best):'',officialBest:'',source:'Cronometro',frontGear:'',rearGear:'',sagF:'',sagR:'',tireF:'',tireR:'',feedback:'',changes:'',adaId:null})
- }
- save();alert('Sessione salvata.');chronoNew()
-}
+function buildNameFields(){let n=Number($('chronoCount')?.value||2),box=$('chronoNameFields');if(!box)return;let old=[...box.querySelectorAll('input')].map(x=>x.value);box.innerHTML=Array.from({length:n},(_,i)=>`<input id="chronoName${i}" value="${esc(old[i]||'')}" placeholder="Nome pilota ${i+1}">`).join('')}
+function prepareChrono(){let n=Number($('chronoCount').value),names=[];for(let i=0;i<n;i++){let v=$(`chronoName${i}`).value.trim();if(!v){alert(`Inserisci il nome del pilota ${i+1}`);return}names.push(v)}chrono={active:true,running:true,startAt:performance.now(),elapsed:0,raf:null,pilots:names.map(name=>({id:uid(),name,lastPass:null,laps:[],excluded:[],flash:'',paused:false}))};$('chronoSetup').classList.add('chrono-hidden');$('chronoLive').classList.remove('chrono-hidden');$('chronoAnalysis').classList.add('chrono-hidden');$('liveSessionName').textContent=$('chronoName').value||'Sessione';document.body.classList.add('chrono-focus');renderChrono();chronoTick()}
+function chronoTick(){if($('sessionClock'))$('sessionClock').textContent=chronoFormat(chronoNow());if(chrono.running)chrono.raf=requestAnimationFrame(chronoTick)}
+function tapPilot(id){if(!chrono.running)return;let p=chrono.pilots.find(x=>x.id===id);if(!p||p.paused)return;let now=chronoNow();if(p.lastPass===null){p.lastPass=now;p.flash='normal'}else{let lap=now-p.lastPass;p.lastPass=now;p.laps.push(lap);p.excluded.push(false);p.flash=lap===Math.min(...p.laps)?'best':'normal'}renderChrono();setTimeout(()=>{let q=chrono.pilots.find(x=>x.id===id);if(q){q.flash='';renderChrono()}},450)}
+function pilotMenu(ev,id){ev.stopPropagation();let p=chrono.pilots.find(x=>x.id===id);let a=prompt(`${p.name}\n1 = annulla ultimo giro\n2 = pausa/riprendi`);if(a==='1'){if(p.laps.length){p.laps.pop();p.excluded.pop();p.lastPass=p.laps.reduce((x,y)=>x+y,0)}else p.lastPass=null;renderChrono()}else if(a==='2'){p.paused=!p.paused;renderChrono()}}
+function renderChrono(){let grid=$('chronoGrid');if(grid&&chrono.active){grid.dataset.count=chrono.pilots.length;grid.innerHTML=chrono.pilots.map(p=>{let last=p.laps.at(-1)||0,best=p.laps.length?Math.min(...p.laps):0,gap=last&&best?last-best:0;return `<div class="live-tile ${p.flash==='best'?'bestflash':p.flash?'flash':''}" onclick="tapPilot('${p.id}')"><button class="live-menu" onclick="pilotMenu(event,'${p.id}')">⋯</button><div class="live-name">${esc(p.name)}</div><div class="live-main"><div class="live-label">ULTIMO GIRO</div><div class="live-last">${last?lapFormat(last):(p.lastPass===null?'—':'ATTESA GIRO')}</div><div class="live-gap ${gap===0&&last?'best':''}">${last?(gap===0?'NUOVO BEST':'+'+lapFormat(gap)):'Tocca al passaggio'}</div></div><div class="live-stats"><div class="live-stat"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="live-stat"><span>Giri</span><strong>${p.laps.length}</strong></div></div></div>`}).join('')}let h=$('chronoHistory');if(h)h.innerHTML=db.chronoSessions.length?[...db.chronoSessions].reverse().map(c=>`<div class="item"><h3>${esc(c.name)}</h3><p>${c.results.map(r=>`${esc(r.name)}: ${r.laps.length} giri, best ${r.best?lapFormat(r.best):'—'}`).join(' · ')}</p></div>`).join(''):empty('Nessuna sessione salvata')}
+function validLaps(p){return p.laps.filter((_,i)=>!p.excluded[i])}
+function avg(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:0}
+function consistency(a){if(a.length<2)return 100;let m=avg(a),sd=Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/a.length);return Math.max(0,Math.min(100,100-(sd/m*500)))}
+function toggleLap(id,i){let p=chrono.pilots.find(x=>x.id===id);p.excluded[i]=!p.excluded[i];renderAnalysis()}
+function chronoEnd(){if(!confirm('Terminare la sessione?'))return;chrono.elapsed=chronoNow();chrono.running=false;cancelAnimationFrame(chrono.raf);document.body.classList.remove('chrono-focus');$('chronoLive').classList.add('chrono-hidden');$('chronoAnalysis').classList.remove('chrono-hidden');renderAnalysis()}
+function renderAnalysis(){let box=$('chronoAnalysis');box.innerHTML=`<div class="hero"><h2>Analisi sessione</h2><p>${esc($('chronoName').value)} · durata ${chronoFormat(chrono.elapsed)}</p></div>`+chrono.pilots.map(p=>{let v=validLaps(p),best=v.length?Math.min(...v):0,mean=avg(v),m5=avg(v.slice(-5)),m10=avg(v.slice(-10)),worst=v.length?Math.max(...v):0;return `<div class="card"><h2>${esc(p.name)}</h2><div class="analysis-grid"><div class="analysis-kpi"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="analysis-kpi"><span>Media validi</span><strong>${mean?lapFormat(mean):'—'}</strong></div><div class="analysis-kpi"><span>Ultimi 5</span><strong>${m5?lapFormat(m5):'—'}</strong></div><div class="analysis-kpi"><span>Ultimi 10</span><strong>${m10?lapFormat(m10):'—'}</strong></div><div class="analysis-kpi"><span>Costanza</span><strong>${consistency(v).toFixed(1)}%</strong></div><div class="analysis-kpi"><span>Range</span><strong>${best&&worst?lapFormat(worst-best):'—'}</strong></div><div class="analysis-kpi"><span>Validi</span><strong>${v.length}</strong></div><div class="analysis-kpi"><span>Esclusi</span><strong>${p.excluded.filter(Boolean).length}</strong></div></div><div style="overflow:auto"><table><thead><tr><th>Giro</th><th>Tempo</th><th>Δ Best</th><th>Stato</th></tr></thead><tbody>${p.laps.map((lap,i)=>`<tr onclick="toggleLap('${p.id}',${i})" class="lap-click ${p.excluded[i]?'lap-invalid':''} ${!p.excluded[i]&&lap===best?'lap-best':''}"><td>${i+1}</td><td>${lapFormat(lap)}</td><td>${lap===best?'BEST':'+'+lapFormat(lap-best)}</td><td>${p.excluded[i]?'Escluso':'Valido'}</td></tr>`).join('')}</tbody></table></div><p class="muted">Tocca un giro per escluderlo o reinserirlo nelle statistiche.</p></div>`}).join('')+`<div class="card"><div class="actions"><button class="btn btn-blue" onclick="chronoSave()">Salva sessione</button><button class="btn btn-secondary" onclick="chronoNew()">Nuova sessione</button></div></div>`}
+function chronoNew(){chrono={active:false,running:false,startAt:0,elapsed:0,raf:null,pilots:[]};document.body.classList.remove('chrono-focus');$('chronoSetup').classList.remove('chrono-hidden');$('chronoLive').classList.add('chrono-hidden');$('chronoAnalysis').classList.add('chrono-hidden');buildNameFields();renderChrono()}
+function chronoSave(){let results=chrono.pilots.map(p=>({name:p.name,laps:[...p.laps],excluded:[...p.excluded],best:validLaps(p).length?Math.min(...validLaps(p)):0,average:avg(validLaps(p))}));let did=$('chronoDay').value,d=get('days',did);db.chronoSessions.push({id:uid(),name:$('chronoName').value||'Sessione',dayId:did,date:d?.date||new Date().toISOString().slice(0,10),track:d?.track||'',duration:chrono.elapsed,results});save();alert('Sessione salvata');chronoNew()}
+
 function backup(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='race-setup-v02-backup.json';a.click()}
 
 function u16(d,o){return d.getUint16(o,true)} function u32(d,o){return d.getUint32(o,true)}
