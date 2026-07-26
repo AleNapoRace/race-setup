@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v0.9</title>
+<title>Race Setup v1.0</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -179,7 +179,7 @@ body.chrono-locked .live-tile{
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v0.9 · archivio sessioni corretto</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.0 · collegamento turni e popup corretti</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -214,7 +214,15 @@ body.chrono-locked .live-tile{
 <option value="1">1 pilota</option><option value="2" selected>2 piloti</option><option value="3">3 piloti</option><option value="4">4 piloti</option><option value="5">5 piloti</option><option value="6">6 piloti</option><option value="7">7 piloti</option><option value="8">8 piloti</option>
 </select></div>
 <div><label>Nome sessione</label><input id="chronoName" value="Prove libere"></div>
-<div class="full"><label>Giornata da associare</label><select id="chronoDay"></select></div>
+<div class="full"><label>Giornata da associare</label>
+<select id="chronoDay" onchange="fillChronoTurns()"></select></div>
+<div class="full"><label>Turno da associare</label>
+<select id="chronoTurn">
+<option value="">Nessun turno</option>
+<option value="__new__">Crea un nuovo turno al salvataggio</option>
+</select>
+<p class="muted" style="margin-top:6px">Puoi collegare il crono a un turno già creato oppure farne creare uno nuovo automaticamente.</p>
+</div>
 </div>
 <label>Nomi piloti</label><div id="chronoNameFields" class="name-fields"></div>
 <div class="actions"><button class="btn btn-primary" onclick="prepareChrono()">AVVIA SESSIONE</button></div>
@@ -261,13 +269,13 @@ body.chrono-locked .live-tile{
 <button class="nav-btn" data-screen="tires"><span>◎</span>Gomme</button>
 </div></nav>
 
-<dialog id="riderModal"><form method="dialog" onsubmit="saveRider(event)"><div class="modal-head"><strong>Nuovo pilota</strong><button class="x" value="cancel">×</button></div><div class="modal-body form-grid">
+<dialog id="riderModal"><form method="dialog" onsubmit="saveRider(event)"><div class="modal-head"><strong>Nuovo pilota</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('riderModal')">×</button></div><div class="modal-body form-grid">
 <div class="full"><label>Nome e cognome *</label><input id="riderName" required></div><div><label>Numero gara</label><input id="riderNumber" type="number"></div><div><label>Categoria</label><input id="riderCategory"></div><div><label>Peso (kg)</label><input id="riderWeight" type="number" step=".1"></div><div><label>Peso pronto gara (kg)</label><input id="riderRaceWeight" type="number" step=".1"></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
 
-<dialog id="bikeModal"><form method="dialog" onsubmit="saveBike(event)"><div class="modal-head"><strong>Nuova moto</strong><button class="x" value="cancel">×</button></div><div class="modal-body form-grid">
+<dialog id="bikeModal"><form method="dialog" onsubmit="saveBike(event)"><div class="modal-head"><strong>Nuova moto</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('bikeModal')">×</button></div><div class="modal-body form-grid">
 <div><label>Marca *</label><input id="bikeBrand" required></div><div><label>Modello *</label><input id="bikeModel" required></div><div><label>Cilindrata *</label><input id="bikeCc" required type="number"></div><div><label>Anno</label><input id="bikeYear" type="number"></div><div><label>Categoria</label><input id="bikeCategory"></div><div><label>Motore</label><input id="bikeEngine"></div><div><label>Tipo motore</label><select id="bikeStroke"><option>4T</option><option>2T</option><option>Elettrico</option></select></div><div><label>Ruote</label><input id="bikeWheels" placeholder='10"'></div><div class="full"><label>Configurazione/note</label><textarea id="bikeNotes"></textarea></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
 
-<dialog id="dayModal"><form method="dialog" onsubmit="saveDay(event)"><div class="modal-head"><strong>Nuova giornata</strong><button class="x" value="cancel">×</button></div><div class="modal-body form-grid">
+<dialog id="dayModal"><form method="dialog" onsubmit="saveDay(event)"><div class="modal-head"><strong>Nuova giornata</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('dayModal')">×</button></div><div class="modal-body form-grid">
 <div><label>Data *</label><input id="dayDate" type="date" required></div><div><label>Evento</label><select id="dayType"><option>Allenamento</option><option>Prove libere</option><option>Qualifica</option><option>Gara</option></select></div>
 <div><label>Pilota *</label><select id="dayRider" required></select></div><div><label>Moto *</label><select id="dayBike" required></select></div>
 <div class="full"><label>Circuito *</label><input id="dayTrack" required placeholder="Es. Viterbo"></div><div><label>Configurazione pista</label><input id="dayLayout" placeholder="Es. set 050"></div>
@@ -275,14 +283,14 @@ body.chrono-locked .live-tile{
 <div><label>Meteo</label><select id="dayWeather"><option>Sole</option><option>Nuvoloso</option><option>Variabile</option><option>Pioggia</option></select></div><div><label>Obiettivo</label><input id="dayGoal" placeholder="Es. test rapporto"></div>
 <div class="full"><label>Note</label><textarea id="dayNotes"></textarea></div><div class="full actions"><button class="btn btn-primary">Inizia giornata</button></div></div></form></dialog>
 
-<dialog id="sessionModal"><form method="dialog" onsubmit="saveSession(event)"><div class="modal-head"><strong>Nuovo turno manuale</strong><button class="x" value="cancel">×</button></div><div class="modal-body form-grid">
+<dialog id="sessionModal"><form method="dialog" onsubmit="saveSession(event)"><div class="modal-head"><strong>Nuovo turno manuale</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('sessionModal')">×</button></div><div class="modal-body form-grid">
 <div class="full"><label>Giornata *</label><select id="sessionDay" required></select></div><div><label>Tipo turno</label><select id="sessionType"><option>Libere</option><option>Qualifica</option><option>Warm-up</option><option>Gara 1</option><option>Gara 2</option></select></div><div><label>Numero turno</label><input id="sessionNumber" type="number" value="1"></div>
 <div><label>Orario indicativo</label><input id="sessionTime" type="time"></div><div><label>Giri</label><input id="sessionLaps" type="number"></div><div><label>Miglior giro</label><input id="sessionBest" placeholder="1:01.900"></div>
 <div><label>Pignone</label><input id="sessionFrontGear" type="number"></div><div><label>Corona</label><input id="sessionRearGear" type="number"></div><div><label>SAG anteriore</label><input id="sessionSagF" type="number" step=".1"></div><div><label>SAG posteriore</label><input id="sessionSagR" type="number" step=".1"></div>
 <div><label>Gomma anteriore</label><select id="sessionTireF"></select></div><div><label>Gomma posteriore</label><select id="sessionTireR"></select></div>
 <div class="full"><label>Feedback pilota</label><textarea id="sessionFeedback"></textarea></div><div class="full"><label>Modifiche</label><textarea id="sessionChanges"></textarea></div><div class="full actions"><button class="btn btn-primary">Salva turno</button></div></div></form></dialog>
 
-<dialog id="tireModal"><form method="dialog" onsubmit="saveTire(event)"><div class="modal-head"><strong>Nuova gomma</strong><button class="x" value="cancel">×</button></div><div class="modal-body form-grid">
+<dialog id="tireModal"><form method="dialog" onsubmit="saveTire(event)"><div class="modal-head"><strong>Nuova gomma</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('tireModal')">×</button></div><div class="modal-body form-grid">
 <div><label>Codice *</label><input id="tireCode" required></div><div><label>Posizione</label><select id="tirePosition"><option>Anteriore</option><option>Posteriore</option></select></div><div><label>Marca *</label><input id="tireBrand" required></div><div><label>Modello/mescola</label><input id="tireModel"></div><div><label>Misura</label><input id="tireSize"></div><div><label>Giri iniziali</label><input id="tireInitialLaps" type="number" value="0"></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
 
 <script>
@@ -300,7 +308,20 @@ const msTime=ms=>{ms=Number(ms||0);let m=Math.floor(ms/60000),s=Math.floor((ms%6
 function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
 function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav-btn').forEach(x=>x.classList.toggle('active',x.dataset.screen===id))}
 document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>go(b.dataset.screen));
-function openModal(id){fillSelects();$(id).showModal()}
+function openModal(id){
+  fillSelects();
+  const dialog=$(id);
+  if(dialog && !dialog.open)dialog.showModal();
+}
+function closeModal(id){
+  const dialog=$(id);
+  if(!dialog)return;
+  if(dialog.open)dialog.close();
+  const form=dialog.querySelector('form');
+  if(form)form.reset();
+  if(id==='dayModal')dayDate.valueAsDate=new Date();
+  fillSelects();
+}
 function resetLater(f){setTimeout(()=>f.reset(),50)}
 function empty(t){return `<div class="empty">${t}</div>`}
 function get(type,id){return db[type].find(x=>x.id===id)}
@@ -312,7 +333,26 @@ function saveDay(e){e.preventDefault();db.days.push({id:uid(),date:dayDate.value
 function saveSession(e){e.preventDefault();db.sessions.push({id:uid(),dayId:sessionDay.value,type:sessionType.value,number:sessionNumber.value,time:sessionTime.value,laps:Number(sessionLaps.value||0),manualBest:sessionBest.value,officialBest:'',source:'Manuale',frontGear:sessionFrontGear.value,rearGear:sessionRearGear.value,sagF:sessionSagF.value,sagR:sessionSagR.value,tireF:sessionTireF.value,tireR:sessionTireR.value,feedback:sessionFeedback.value,changes:sessionChanges.value,adaId:null});save();sessionModal.close();resetLater(e.target)}
 function saveTire(e){e.preventDefault();db.tires.push({id:uid(),code:tireCode.value,position:tirePosition.value,brand:tireBrand.value,model:tireModel.value,size:tireSize.value,initialLaps:Number(tireInitialLaps.value||0)});save();tireModal.close();resetLater(e.target)}
 function fill(id,items,label,blank='Seleziona...'){let el=$(id);el.innerHTML=`<option value="">${blank}</option>`+items.map(x=>`<option value="${x.id}">${esc(label(x))}</option>`).join('')}
-function fillSelects(){fill('chronoDay',db.days,x=>`${fmtDate(x.date)} · ${x.track}`,'Nessuna giornata');fill('dayRider',db.riders,x=>x.name);fill('dayBike',db.bikes,x=>`${x.brand} ${x.model} ${x.cc} cc`);fill('sessionDay',db.days,x=>`${fmtDate(x.date)} · ${x.track}`);fill('sessionTireF',db.tires.filter(x=>x.position==='Anteriore'),x=>`${x.code} · ${x.brand} ${x.model}`,'Nessuna');fill('sessionTireR',db.tires.filter(x=>x.position==='Posteriore'),x=>`${x.code} · ${x.brand} ${x.model}`,'Nessuna')}
+function fillChronoTurns(){
+  const el=$('chronoTurn');if(!el)return;
+  const current=el.value;
+  const dayId=$('chronoDay')?.value||'';
+  const sessions=db.sessions.filter(s=>!dayId||s.dayId===dayId);
+  el.innerHTML='<option value="">Nessun turno</option><option value="__new__">Crea un nuovo turno al salvataggio</option>'+
+    sessions.map(s=>`<option value="${s.id}">${esc(s.type)} ${esc(s.number||'')} · ${esc(s.source||'Manuale')} · Best ${esc(s.officialBest||s.manualBest||'—')}</option>`).join('');
+  if([...el.options].some(o=>o.value===current))el.value=current;
+}
+function fillSelects(){
+  const currentChronoDay=$('chronoDay')?.value||'';
+  fill('chronoDay',db.days,x=>`${fmtDate(x.date)} · ${x.track}`,'Nessuna giornata');
+  if(currentChronoDay && [...$('chronoDay').options].some(o=>o.value===currentChronoDay))$('chronoDay').value=currentChronoDay;
+  fillChronoTurns();
+  fill('dayRider',db.riders,x=>x.name);
+  fill('dayBike',db.bikes,x=>`${x.brand} ${x.model} ${x.cc} cc`);
+  fill('sessionDay',db.days,x=>`${fmtDate(x.date)} · ${x.track}`);
+  fill('sessionTireF',db.tires.filter(x=>x.position==='Anteriore'),x=>`${x.code} · ${x.brand} ${x.model}`,'Nessuna');
+  fill('sessionTireR',db.tires.filter(x=>x.position==='Posteriore'),x=>`${x.code} · ${x.brand} ${x.model}`,'Nessuna');
+}
 function tireLaps(t){return Number(t.initialLaps||0)+db.sessions.filter(s=>s.tireF===t.id||s.tireR===t.id).reduce((a,s)=>a+Number(s.laps||0),0)}
 function render(){
 $('stats').innerHTML=[['Piloti',db.riders.length],['Moto',db.bikes.length],['Turni',db.sessions.length],['Import ADA',db.adaImports.length]].map(x=>`<div class="stat"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');
@@ -343,7 +383,7 @@ function prepareChrono(){let n=Number($('chronoCount').value),names=[];for(let i
 function chronoTick(){if($('sessionClock'))$('sessionClock').textContent=chronoFormat(chronoNow());if(chrono.running)chrono.raf=requestAnimationFrame(chronoTick)}
 function tapPilot(id,event){if(event){event.preventDefault();event.stopPropagation()}if(!chrono.running)return;if(navigator.vibrate)navigator.vibrate(18);let p=chrono.pilots.find(x=>x.id===id);if(!p||p.paused)return;let now=chronoNow();if(p.lastPass===null){p.lastPass=now;p.flash='normal'}else{let lap=now-p.lastPass;p.lastPass=now;p.laps.push(lap);p.excluded.push(false);p.flash=lap===Math.min(...p.laps)?'best':'normal'}renderChrono();setTimeout(()=>{let q=chrono.pilots.find(x=>x.id===id);if(q){q.flash='';renderChrono()}},450)}
 function pilotMenu(ev,id){ev.stopPropagation();let p=chrono.pilots.find(x=>x.id===id);let a=prompt(`${p.name}\n1 = annulla ultimo giro\n2 = pausa/riprendi`);if(a==='1'){if(p.laps.length){p.laps.pop();p.excluded.pop();p.lastPass=p.laps.reduce((x,y)=>x+y,0)}else p.lastPass=null;renderChrono()}else if(a==='2'){p.paused=!p.paused;renderChrono()}}
-function renderChrono(){let grid=$('chronoGrid');if(grid&&chrono.active){grid.dataset.count=chrono.pilots.length;grid.innerHTML=chrono.pilots.map(p=>{let last=p.laps.at(-1)||0,best=p.laps.length?Math.min(...p.laps):0,gap=last&&best?last-best:0;return `<div class="live-tile ${p.flash==='best'?'bestflash':p.flash?'flash':''}" onpointerdown="tapPilot('${p.id}',event)"><button class="live-menu" onclick="pilotMenu(event,'${p.id}')">⋯</button><div class="live-name">${esc(p.name)}</div><div class="live-main"><div class="live-label">ULTIMO GIRO</div><div class="live-last">${last?lapFormat(last):(p.lastPass===null?'—':'ATTESA GIRO')}</div><div class="live-gap ${gap===0&&last?'best':''}">${last?(gap===0?'NUOVO BEST':'+'+lapFormat(gap)):'Tocca al passaggio'}</div></div><div class="live-stats"><div class="live-stat"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="live-stat"><span>Giri</span><strong>${p.laps.length}</strong></div></div></div>`}).join('')}let h=$('chronoHistory');if(h)h.innerHTML=db.chronoSessions.length?[...db.chronoSessions].reverse().map(c=>`<div class="item saved-session-card"><div class="row"><div><h3>${esc(c.name)}</h3><p>${fmtDate(c.date)} · ${esc(c.track||'Senza circuito')} · durata ${chronoFormat(c.duration)}</p><p>${(c.results||[]).map(r=>`${esc(r.name)}: ${(r.laps||[]).length} giri, best ${r.best?lapFormat(r.best):'—'}`).join(' · ')}</p></div><div class="actions" style="margin-top:0;justify-content:flex-end"><button class="btn btn-blue btn-small" onclick="openSavedSession('${c.id}')">Apri</button><button class="btn btn-danger btn-small" onclick="deleteSessionFromList('${c.id}')">Elimina</button></div></div></div>`).join(''):empty('Nessuna sessione salvata')}
+function renderChrono(){let grid=$('chronoGrid');if(grid&&chrono.active){grid.dataset.count=chrono.pilots.length;grid.innerHTML=chrono.pilots.map(p=>{let last=p.laps.at(-1)||0,best=p.laps.length?Math.min(...p.laps):0,gap=last&&best?last-best:0;return `<div class="live-tile ${p.flash==='best'?'bestflash':p.flash?'flash':''}" onpointerdown="tapPilot('${p.id}',event)"><button class="live-menu" onclick="pilotMenu(event,'${p.id}')">⋯</button><div class="live-name">${esc(p.name)}</div><div class="live-main"><div class="live-label">ULTIMO GIRO</div><div class="live-last">${last?lapFormat(last):(p.lastPass===null?'—':'ATTESA GIRO')}</div><div class="live-gap ${gap===0&&last?'best':''}">${last?(gap===0?'NUOVO BEST':'+'+lapFormat(gap)):'Tocca al passaggio'}</div></div><div class="live-stats"><div class="live-stat"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="live-stat"><span>Giri</span><strong>${p.laps.length}</strong></div></div></div>`}).join('')}let h=$('chronoHistory');if(h)h.innerHTML=db.chronoSessions.length?[...db.chronoSessions].reverse().map(c=>`<div class="item saved-session-card"><div class="row"><div><h3>${esc(c.name)}</h3><p>${fmtDate(c.date)} · ${esc(c.track||'Senza circuito')} · durata ${chronoFormat(c.duration)}${c.turnId?' · Turno collegato':''}</p><p>${(c.results||[]).map(r=>`${esc(r.name)}: ${(r.laps||[]).length} giri, best ${r.best?lapFormat(r.best):'—'}`).join(' · ')}</p></div><div class="actions" style="margin-top:0;justify-content:flex-end"><button class="btn btn-blue btn-small" onclick="openSavedSession('${c.id}')">Apri</button><button class="btn btn-danger btn-small" onclick="deleteSessionFromList('${c.id}')">Elimina</button></div></div></div>`).join(''):empty('Nessuna sessione salvata')}
 function validLaps(p){return p.laps.filter((_,i)=>!p.excluded[i])}
 function avg(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:0}
 function consistency(a){if(a.length<2)return 100;let m=avg(a),sd=Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/a.length);return Math.max(0,Math.min(100,100-(sd/m*500)))}
@@ -351,7 +391,69 @@ function toggleLap(id,i){let p=chrono.pilots.find(x=>x.id===id);p.excluded[i]=!p
 function chronoEnd(){if(!confirm('Terminare la sessione?'))return;chrono.elapsed=chronoNow();chrono.running=false;cancelAnimationFrame(chrono.raf);document.body.classList.remove('chrono-focus','chrono-locked');document.documentElement.classList.remove('chrono-locked');$('chronoLive').classList.add('chrono-hidden');$('chronoAnalysis').classList.remove('chrono-hidden');renderAnalysis()}
 function renderAnalysis(){let box=$('chronoAnalysis');box.innerHTML=`<div class="hero"><h2>Analisi sessione</h2><p>${esc($('chronoName').value)} · durata ${chronoFormat(chrono.elapsed)}</p></div>`+chrono.pilots.map(p=>{let v=validLaps(p),best=v.length?Math.min(...v):0,mean=avg(v),m5=avg(v.slice(-5)),m10=avg(v.slice(-10)),worst=v.length?Math.max(...v):0;return `<div class="card"><h2>${esc(p.name)}</h2><div class="analysis-grid"><div class="analysis-kpi"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="analysis-kpi"><span>Media validi</span><strong>${mean?lapFormat(mean):'—'}</strong></div><div class="analysis-kpi"><span>Ultimi 5</span><strong>${m5?lapFormat(m5):'—'}</strong></div><div class="analysis-kpi"><span>Ultimi 10</span><strong>${m10?lapFormat(m10):'—'}</strong></div><div class="analysis-kpi"><span>Costanza</span><strong>${consistency(v).toFixed(1)}%</strong></div><div class="analysis-kpi"><span>Range</span><strong>${best&&worst?lapFormat(worst-best):'—'}</strong></div><div class="analysis-kpi"><span>Validi</span><strong>${v.length}</strong></div><div class="analysis-kpi"><span>Esclusi</span><strong>${p.excluded.filter(Boolean).length}</strong></div></div><div style="overflow:auto"><table><thead><tr><th>Giro</th><th>Tempo</th><th>Δ Best</th><th>Stato</th></tr></thead><tbody>${p.laps.map((lap,i)=>`<tr onclick="toggleLap('${p.id}',${i})" class="lap-click ${p.excluded[i]?'lap-invalid':''} ${!p.excluded[i]&&lap===best?'lap-best':''}"><td>${i+1}</td><td>${lapFormat(lap)}</td><td>${lap===best?'BEST':'+'+lapFormat(lap-best)}</td><td>${p.excluded[i]?'Escluso':'Valido'}</td></tr>`).join('')}</tbody></table></div><p class="muted">Tocca un giro per escluderlo o reinserirlo nelle statistiche.</p></div>`}).join('')+`<div class="card"><div class="actions"><button class="btn btn-blue" onclick="chronoSave()">Salva sessione</button><button class="btn btn-secondary" onclick="chronoNew()">Nuova sessione</button></div></div>`}
 function chronoNew(){chrono={active:false,running:false,startAt:0,elapsed:0,raf:null,pilots:[]};document.body.classList.remove('chrono-focus','chrono-locked');document.documentElement.classList.remove('chrono-locked');$('chronoSetup').classList.remove('chrono-hidden');$('chronoLive').classList.add('chrono-hidden');$('chronoAnalysis').classList.add('chrono-hidden');buildNameFields();renderChrono()}
-function chronoSave(){let results=chrono.pilots.map(p=>({name:p.name,laps:[...p.laps],excluded:[...p.excluded],best:validLaps(p).length?Math.min(...validLaps(p)):0,average:avg(validLaps(p))}));let did=$('chronoDay').value,d=get('days',did);db.chronoSessions.push({id:uid(),name:$('chronoName').value||'Sessione',dayId:did,date:d?.date||new Date().toISOString().slice(0,10),track:d?.track||'',duration:chrono.elapsed,results});save();alert('Sessione salvata');chronoNew()}
+function chronoSave(){
+  let results=chrono.pilots.map(p=>({
+    name:p.name,
+    laps:[...p.laps],
+    excluded:[...p.excluded],
+    validLaps:validLaps(p),
+    best:validLaps(p).length?Math.min(...validLaps(p)):0,
+    average:avg(validLaps(p))
+  }));
+  let did=$('chronoDay').value;
+  let d=get('days',did);
+  let turnChoice=$('chronoTurn')?.value||'';
+  let chronoId=uid();
+  let linkedTurnId='';
+
+  if(turnChoice==='__new__'){
+    if(!did){
+      alert('Per creare un nuovo turno devi prima selezionare una giornata.');
+      return;
+    }
+    const main=results[0];
+    linkedTurnId=uid();
+    db.sessions.push({
+      id:linkedTurnId,
+      dayId:did,
+      type:$('chronoName').value||'Sessione cronometrata',
+      number:db.sessions.filter(x=>x.dayId===did).length+1,
+      time:new Date().toTimeString().slice(0,5),
+      laps:main?.validLaps?.length||0,
+      manualBest:main?.best?lapFormat(main.best):'',
+      officialBest:'',
+      source:'Cronometro',
+      frontGear:'',rearGear:'',sagF:'',sagR:'',
+      tireF:'',tireR:'',feedback:'',changes:'',
+      adaId:null,
+      chronoId
+    });
+  }else if(turnChoice){
+    const turn=get('sessions',turnChoice);
+    if(turn){
+      const main=results[0];
+      linkedTurnId=turn.id;
+      turn.laps=main?.validLaps?.length||turn.laps||0;
+      turn.manualBest=main?.best?lapFormat(main.best):(turn.manualBest||'');
+      turn.source=turn.source==='ADA'?'ADA + Cronometro':'Cronometro';
+      turn.chronoId=chronoId;
+    }
+  }
+
+  db.chronoSessions.push({
+    id:chronoId,
+    name:$('chronoName').value||'Sessione',
+    dayId:did,
+    turnId:linkedTurnId,
+    date:d?.date||new Date().toISOString().slice(0,10),
+    track:d?.track||'',
+    duration:chrono.elapsed,
+    results
+  });
+  save();
+  alert(linkedTurnId?'Sessione salvata e collegata al turno.':'Sessione salvata.');
+  chronoNew();
+}
 
 
 
@@ -523,6 +625,17 @@ if('serviceWorker' in navigator && (location.protocol==='https:' || location.hos
 document.addEventListener('touchmove',e=>{if(document.body.classList.contains('chrono-locked'))e.preventDefault()},{passive:false});
 document.addEventListener('gesturestart',e=>{if(document.body.classList.contains('chrono-locked'))e.preventDefault()},{passive:false});
 document.addEventListener('contextmenu',e=>{if(document.body.classList.contains('chrono-locked'))e.preventDefault()});
+
+
+document.querySelectorAll('dialog').forEach(dialog=>{
+  dialog.addEventListener('cancel',event=>{
+    event.preventDefault();
+    closeModal(dialog.id);
+  });
+  dialog.addEventListener('click',event=>{
+    if(event.target===dialog)closeModal(dialog.id);
+  });
+});
 
 dayDate.valueAsDate=new Date();buildNameFields();render();
 </script>

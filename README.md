@@ -1,8 +1,19 @@
-# Race Setup v0.9
+# Race Setup v1.0
 
-Correzioni:
-- pulsante Apri visibile su ogni sessione salvata;
-- pulsante Elimina visibile direttamente nell’elenco;
-- apertura del dettaglio con tutti i giri e le statistiche;
-- compatibilità con eventuali sessioni più vecchie prive di identificativo;
-- cronometro a schermo bloccato mantenuto.
+## Correzioni
+- la X chiude correttamente tutti i moduli:
+  - Nuovo pilota
+  - Nuova moto
+  - Nuova giornata
+  - Nuovo turno
+  - Nuova gomma
+- chiusura anche toccando fuori dal popup;
+- chiusura con Esc su PC;
+- nessun salvataggio dei dati quando il popup viene annullato.
+
+## Cronometro
+- associazione a una giornata;
+- associazione a un turno esistente;
+- creazione automatica di un nuovo turno;
+- aggiornamento di numero giri e best del turno collegato;
+- indicazione del collegamento nell’archivio delle sessioni.
