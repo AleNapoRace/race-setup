@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v1.2</title>
+<title>Race Setup v1.3</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -185,7 +185,7 @@ body.chrono-locked .live-tile{
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.2 · scheda turno tecnica completa</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.3 · import Alfano e dati Prisma</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -303,8 +303,7 @@ body.chrono-locked .live-tile{
 <dialog id="dayModal"><form method="dialog" onsubmit="saveDay(event)">
 <div class="modal-head"><strong>Nuova giornata</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('dayModal')">×</button></div>
 <div class="modal-body form-grid">
-<div><label>Data automatica</label><input id="dayDateDisplay" readonly></div>
-<div><label>Ora automatica</label><input id="dayTimeDisplay" readonly></div>
+<div class="full"><label>Data automatica</label><input id="dayDateDisplay" readonly></div>
 <div class="full"><label>Evento</label><select id="dayType">
 <option>Allenamento</option><option>Test</option><option>Prove libere</option><option>Qualifica</option><option>Gara</option>
 </select></div>
@@ -334,10 +333,10 @@ body.chrono-locked .live-tile{
 <div class="form-section"><h3>Dati meteo da Prisma</h3><p>Scatta o carica una foto e inserisci i valori letti.</p></div>
 <div class="full"><label>Foto Prisma</label><input id="sessionPrismaPhoto" type="file" accept="image/*" capture="environment" onchange="previewPrismaPhoto(event)"><img id="sessionPrismaPreview" class="preview-photo" alt="Anteprima Prisma"></div>
 <div><label>Temperatura aria °C</label><input id="sessionAirTemp" type="number" step="0.1"></div>
-<div><label>Temperatura asfalto °C</label><input id="sessionTrackTemp" type="number" step="0.1"></div>
-<div><label>Umidità %</label><input id="sessionHumidity" type="number" step="0.1"></div>
 <div><label>Pressione atmosferica hPa</label><input id="sessionAtmosphericPressure" type="number" step="0.1"></div>
-<div><label>Vento km/h</label><input id="sessionWindSpeed" type="number" step="0.1"></div>
+<div><label>Umidità relativa RH %</label><input id="sessionHumidity" type="number" step="0.1"></div>
+<div><label>Densità aria</label><input id="sessionAirDensity" type="number" step="0.001"></div>
+<div><label>Altitudine m</label><input id="sessionAltitude" type="number" step="0.1"></div>
 <div><label>Condizioni</label><select id="sessionWeather"><option>Sole</option><option>Nuvoloso</option><option>Variabile</option><option>Pioggia</option></select></div>
 
 <div class="form-section"><h3>Carburazione</h3></div>
@@ -349,8 +348,10 @@ body.chrono-locked .live-tile{
 <div class="form-section"><h3>Sonda gas di scarico</h3></div>
 <div><label>Temperatura massima °C</label><input id="sessionEgtMax" type="number" step="0.1"></div>
 <div><label>Temperatura minima °C</label><input id="sessionEgtMin" type="number" step="0.1"></div>
+<div><label>Temperatura media °C</label><input id="sessionEgtAvg" type="number" step="0.1"></div>
 
 <div class="form-section"><h3>Gomme</h3></div>
+<div><label>Temperatura asfalto °C</label><input id="sessionTrackTemp" type="number" step="0.1"></div>
 <div><label>Marca</label><input id="sessionTireBrand"></div>
 <div><label>Tipologia</label><input id="sessionTireType" placeholder="Es. slick"></div>
 <div><label>Mescola</label><input id="sessionTireCompound"></div>
@@ -377,11 +378,13 @@ body.chrono-locked .live-tile{
 <div><label>Ritorno</label><input id="sessionShockRebound"></div>
 
 <div class="form-section"><h3>Prestazione e note</h3></div>
-<div><label>Giro migliore</label><input id="sessionBest" placeholder="Es. 1:01.740"></div>
+<div><label>Giro migliore</label><input id="sessionBest" placeholder="Manuale o importato"></div>
 <div><label>Velocità massima km/h</label><input id="sessionMaxSpeed" type="number" step="0.1"></div>
+<div><label>Numero giri</label><input id="sessionLapCount" type="number" min="0"></div>
+<div><label>Fonte dati</label><select id="sessionDataSource"><option>Manuale</option><option>Alfano / ADA</option><option>MyChron</option><option>Starlane</option><option>Altro</option></select></div>
 <div class="full"><label>Note</label><textarea id="sessionFeedback"></textarea></div>
 
-<div class="full actions"><button class="btn btn-primary">Salva turno</button></div>
+<div class="full actions"><button type="button" class="btn btn-blue" onclick="go('import');sessionModal.close()">Importa dati strumento</button><button class="btn btn-primary">Salva turno</button></div>
 </div></form></dialog>
 
 <dialog id="tireModal"><form method="dialog" onsubmit="saveTire(event)"><div class="modal-head"><strong>Nuova gomma</strong><button type="button" class="x" aria-label="Chiudi" onclick="closeModal('tireModal')">×</button></div><div class="modal-body form-grid">
@@ -467,7 +470,6 @@ function previewPrismaPhoto(event){
 function setAutomaticDayDateTime(){
   const now=new Date();
   if($('dayDateDisplay'))$('dayDateDisplay').value=now.toLocaleDateString('it-IT');
-  if($('dayTimeDisplay'))$('dayTimeDisplay').value=now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
 }
 function del(type,id){if(confirm('Eliminare questo elemento?')){db[type]=db[type].filter(x=>x.id!==id);save()}}
 
@@ -515,11 +517,46 @@ function saveDay(e){
   });
   save();dayModal.close();resetLater(e.target);setAutomaticDayDateTime();
 }
+
+function editSession(id){
+ const s=get('sessions',id);if(!s)return;
+ openModal('sessionModal');
+ sessionModal.dataset.editId=id;
+ sessionDay.value=s.dayId||'';
+ sessionType.value=s.type||'Libere';
+ sessionNumber.value=s.number||1;
+ sessionFrontGear.value=s.frontGear||'';
+ sessionRearGear.value=s.rearGear||'';
+ sessionAirTemp.value=s.airTemp||'';
+ sessionAtmosphericPressure.value=s.atmosphericPressure||'';
+ sessionHumidity.value=s.humidity||'';
+ sessionAirDensity.value=s.airDensity||'';
+ sessionAltitude.value=s.altitude||'';
+ sessionWeather.value=s.weather||'Sole';
+ sessionTrackTemp.value=s.trackTemp||'';
+ sessionPilotJet.value=s.pilotJet||'';
+ sessionMainJet.value=s.mainJet||'';
+ sessionNeedleClip.value=s.needleClip||'';
+ sessionAirScrew.value=s.airScrew||'';
+ sessionEgtMax.value=s.egtMax||'';
+ sessionEgtMin.value=s.egtMin||'';
+ sessionEgtAvg.value=s.egtAvg||'';
+ sessionTireBrand.value=s.tireBrand||'';
+ sessionTireType.value=s.tireType||'';
+ sessionTireCompound.value=s.tireCompound||'';
+ sessionBest.value=s.officialBest||s.manualBest||'';
+ sessionMaxSpeed.value=s.maxSpeed||'';
+ sessionLapCount.value=s.laps||0;
+ sessionDataSource.value=s.source||'Manuale';
+ sessionFeedback.value=s.feedback||'';
+}
+
 function saveSession(e){
   e.preventDefault();
   const now=new Date();
-  db.sessions.push({
-    id:uid(),
+  const editId=sessionModal.dataset.editId||'';
+  const record={
+    id:editId||uid(),
     dayId:sessionDay.value,
     type:sessionType.value,
     number:sessionNumber.value,
@@ -534,7 +571,8 @@ function saveSession(e){
     trackTemp:sessionTrackTemp.value,
     humidity:sessionHumidity.value,
     atmosphericPressure:sessionAtmosphericPressure.value,
-    windSpeed:sessionWindSpeed.value,
+    airDensity:sessionAirDensity.value,
+    altitude:sessionAltitude.value,
     weather:sessionWeather.value,
 
     pilotJet:sessionPilotJet.value,
@@ -544,6 +582,7 @@ function saveSession(e){
 
     egtMax:sessionEgtMax.value,
     egtMin:sessionEgtMin.value,
+    egtAvg:sessionEgtAvg.value,
 
     tireBrand:sessionTireBrand.value,
     tireType:sessionTireType.value,
@@ -571,11 +610,17 @@ function saveSession(e){
     manualBest:sessionBest.value,
     officialBest:'',
     maxSpeed:sessionMaxSpeed.value,
-    source:'Manuale',
+    laps:Number(sessionLapCount.value||0),
+    source:sessionDataSource.value,
     feedback:sessionFeedback.value,
     changes:'',
-    adaId:null
-  });
+    adaId:editId?(get('sessions',editId)?.adaId||null):null
+  };
+  if(editId){
+    const idx=db.sessions.findIndex(x=>x.id===editId);
+    if(idx>=0)db.sessions[idx]=record;
+  }else db.sessions.push(record);
+  delete sessionModal.dataset.editId;
   save();
   sessionModal.close();
   pendingPrismaPhoto='';
@@ -632,7 +677,7 @@ return `<div class="${compact?'item':'card'}"><div class="row"><div><h3>${fmtDat
 }
 function sessionCard(s){
 let best=s.officialBest||s.manualBest||'—';
-return `<div class="item"><div class="row"><div><h3>${esc(s.type)} ${esc(s.number)} <span class="badge ${s.source==='ADA'?'green':'gray'}">${esc(s.source)}</span></h3><p>Best ${esc(best)} · Vel. max ${esc(s.maxSpeed||'—')} km/h · Rapporto ${esc(s.frontGear||'—')}/${esc(s.rearGear||'—')}</p><p>${s.airTemp?'Aria '+esc(s.airTemp)+' °C · ':''}${s.trackTemp?'Asfalto '+esc(s.trackTemp)+' °C · ':''}${s.tireBrand?esc(s.tireBrand)+' '+esc(s.tireCompound||''):''}</p><p>${esc(s.feedback||'Nessuna nota')}</p></div>${s.adaId?`<button class="btn btn-secondary btn-small" onclick="showStoredImport('${s.adaId}')">Analisi</button>`:''}</div></div>`
+return `<div class="item"><div class="row"><div><h3>${esc(s.type)} ${esc(s.number)} <span class="badge ${s.source==='ADA'?'green':'gray'}">${esc(s.source)}</span></h3><p>Best ${esc(best)} · Vel. max ${esc(s.maxSpeed||'—')} km/h · Rapporto ${esc(s.frontGear||'—')}/${esc(s.rearGear||'—')}</p><p>${s.airTemp?'Aria '+esc(s.airTemp)+' °C · ':''}${s.trackTemp?'Asfalto '+esc(s.trackTemp)+' °C · ':''}${s.tireBrand?esc(s.tireBrand)+' '+esc(s.tireCompound||''):''}</p><p>${esc(s.feedback||'Nessuna nota')}</p></div><div class="actions" style="margin-top:0"><button class="btn btn-secondary btn-small" onclick="editSession('${s.id}')">Modifica</button>${s.adaId?`<button class="btn btn-secondary btn-small" onclick="showStoredImport('${s.adaId}')">Analisi</button>`:''}</div></div></div>`
 }
 
 

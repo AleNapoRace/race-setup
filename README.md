@@ -1,17 +1,9 @@
-# Race Setup v1.2
+# Race Setup v1.3
 
-La pagina Turno ora include:
-
-- giornata, tipo turno, numero turno e orario automatico;
-- rapporto pignone/corona;
-- foto Prisma e dati meteo;
-- carburazione;
-- temperature sonda gas di scarico;
-- gomme e pressioni/temperature prima e dopo il turno;
-- forcelle;
-- mono;
-- giro migliore;
-- velocità massima;
-- note.
-
-I dati sono raggruppati per sezioni per rendere la compilazione più chiara in pista.
+- orario rimosso dalla Giornata;
+- dati Prisma: temperatura aria, pressione atmosferica, umidità relativa, densità aria e altitudine;
+- temperatura asfalto spostata nella sezione Gomme;
+- aggiunta EGT media;
+- best lap, velocità massima e numero giri importabili da Alfano/ADA;
+- dati importati sempre modificabili;
+- predisposizione per MyChron, Starlane e altri strumenti.
