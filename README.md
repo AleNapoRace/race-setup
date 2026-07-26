@@ -1,7 +1,17 @@
-# Race Setup v1.4
+# Race Setup v1.5
 
-- aggiunto pulsante Modifica per Piloti, Moto e Circuiti;
-- i moduli si aprono già compilati con i dati salvati;
-- Salva modifiche aggiorna lo stesso elemento senza perdere i collegamenti;
-- piloti e moto collegati a giornate non possono essere eliminati accidentalmente;
-- circuiti collegati a giornate continuano a essere protetti dall'eliminazione.
+## Nickname moto
+Ogni moto può avere un nome riconoscibile, per esempio:
+
+- Race
+- Talenti
+- Allenamento
+- Muletto
+
+Il nickname viene mostrato:
+- nell’elenco delle moto;
+- nella scelta della moto nella Giornata;
+- nei riepiloghi delle giornate;
+- senza modificare i collegamenti già esistenti.
+
+Le moto create nelle versioni precedenti restano disponibili e possono essere modificate per aggiungere il nickname.
