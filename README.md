@@ -1,12 +1,8 @@
-# Race Setup v0.8
+# Race Setup v0.9
 
-## Novità
-- sessioni cronometrate salvate riapribili;
-- dettaglio completo di tutti i piloti e di tutti i giri;
-- esclusione/reinserimento dei giri anche dopo il salvataggio;
-- ricalcolo automatico di best, media, ultimi 5/10, costanza e range;
-- rinomina ed eliminazione delle sessioni;
-- cronometro completamente bloccato durante l'utilizzo;
-- nessuno scroll, trascinamento, zoom o selezione testo;
-- registrazione al primo contatto del dito tramite pointerdown;
-- griglia che occupa tutto lo schermo disponibile.
+Correzioni:
+- pulsante Apri visibile su ogni sessione salvata;
+- pulsante Elimina visibile direttamente nell’elenco;
+- apertura del dettaglio con tutti i giri e le statistiche;
+- compatibilità con eventuali sessioni più vecchie prive di identificativo;
+- cronometro a schermo bloccato mantenuto.

@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v0.8</title>
+<title>Race Setup v0.9</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -179,7 +179,7 @@ body.chrono-locked .live-tile{
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v0.8 · crono bloccato e sessioni riapribili</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v0.9 · archivio sessioni corretto</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -289,6 +289,7 @@ body.chrono-locked .live-tile{
 const KEY='raceSetup_v02';
 let db=JSON.parse(localStorage.getItem(KEY)||'{"riders":[],"bikes":[],"days":[],"sessions":[],"tires":[],"adaImports":[],"chronoSessions":[]}');
 db.chronoSessions=db.chronoSessions||[];
+db.chronoSessions.forEach(s=>{if(!s.id)s.id=uid()});
 let chrono={active:false,running:false,startAt:0,elapsed:0,raf:null,pilots:[],lastEvent:null};
 let pendingImport=null;
 const $=id=>document.getElementById(id);
@@ -342,7 +343,7 @@ function prepareChrono(){let n=Number($('chronoCount').value),names=[];for(let i
 function chronoTick(){if($('sessionClock'))$('sessionClock').textContent=chronoFormat(chronoNow());if(chrono.running)chrono.raf=requestAnimationFrame(chronoTick)}
 function tapPilot(id,event){if(event){event.preventDefault();event.stopPropagation()}if(!chrono.running)return;if(navigator.vibrate)navigator.vibrate(18);let p=chrono.pilots.find(x=>x.id===id);if(!p||p.paused)return;let now=chronoNow();if(p.lastPass===null){p.lastPass=now;p.flash='normal'}else{let lap=now-p.lastPass;p.lastPass=now;p.laps.push(lap);p.excluded.push(false);p.flash=lap===Math.min(...p.laps)?'best':'normal'}renderChrono();setTimeout(()=>{let q=chrono.pilots.find(x=>x.id===id);if(q){q.flash='';renderChrono()}},450)}
 function pilotMenu(ev,id){ev.stopPropagation();let p=chrono.pilots.find(x=>x.id===id);let a=prompt(`${p.name}\n1 = annulla ultimo giro\n2 = pausa/riprendi`);if(a==='1'){if(p.laps.length){p.laps.pop();p.excluded.pop();p.lastPass=p.laps.reduce((x,y)=>x+y,0)}else p.lastPass=null;renderChrono()}else if(a==='2'){p.paused=!p.paused;renderChrono()}}
-function renderChrono(){let grid=$('chronoGrid');if(grid&&chrono.active){grid.dataset.count=chrono.pilots.length;grid.innerHTML=chrono.pilots.map(p=>{let last=p.laps.at(-1)||0,best=p.laps.length?Math.min(...p.laps):0,gap=last&&best?last-best:0;return `<div class="live-tile ${p.flash==='best'?'bestflash':p.flash?'flash':''}" onpointerdown="tapPilot('${p.id}',event)"><button class="live-menu" onclick="pilotMenu(event,'${p.id}')">⋯</button><div class="live-name">${esc(p.name)}</div><div class="live-main"><div class="live-label">ULTIMO GIRO</div><div class="live-last">${last?lapFormat(last):(p.lastPass===null?'—':'ATTESA GIRO')}</div><div class="live-gap ${gap===0&&last?'best':''}">${last?(gap===0?'NUOVO BEST':'+'+lapFormat(gap)):'Tocca al passaggio'}</div></div><div class="live-stats"><div class="live-stat"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="live-stat"><span>Giri</span><strong>${p.laps.length}</strong></div></div></div>`}).join('')}let h=$('chronoHistory');if(h)h.innerHTML=db.chronoSessions.length?[...db.chronoSessions].reverse().map(c=>`<div class="item"><h3>${esc(c.name)}</h3><p>${c.results.map(r=>`${esc(r.name)}: ${r.laps.length} giri, best ${r.best?lapFormat(r.best):'—'}`).join(' · ')}</p></div>`).join(''):empty('Nessuna sessione salvata')}
+function renderChrono(){let grid=$('chronoGrid');if(grid&&chrono.active){grid.dataset.count=chrono.pilots.length;grid.innerHTML=chrono.pilots.map(p=>{let last=p.laps.at(-1)||0,best=p.laps.length?Math.min(...p.laps):0,gap=last&&best?last-best:0;return `<div class="live-tile ${p.flash==='best'?'bestflash':p.flash?'flash':''}" onpointerdown="tapPilot('${p.id}',event)"><button class="live-menu" onclick="pilotMenu(event,'${p.id}')">⋯</button><div class="live-name">${esc(p.name)}</div><div class="live-main"><div class="live-label">ULTIMO GIRO</div><div class="live-last">${last?lapFormat(last):(p.lastPass===null?'—':'ATTESA GIRO')}</div><div class="live-gap ${gap===0&&last?'best':''}">${last?(gap===0?'NUOVO BEST':'+'+lapFormat(gap)):'Tocca al passaggio'}</div></div><div class="live-stats"><div class="live-stat"><span>Best</span><strong>${best?lapFormat(best):'—'}</strong></div><div class="live-stat"><span>Giri</span><strong>${p.laps.length}</strong></div></div></div>`}).join('')}let h=$('chronoHistory');if(h)h.innerHTML=db.chronoSessions.length?[...db.chronoSessions].reverse().map(c=>`<div class="item saved-session-card"><div class="row"><div><h3>${esc(c.name)}</h3><p>${fmtDate(c.date)} · ${esc(c.track||'Senza circuito')} · durata ${chronoFormat(c.duration)}</p><p>${(c.results||[]).map(r=>`${esc(r.name)}: ${(r.laps||[]).length} giri, best ${r.best?lapFormat(r.best):'—'}`).join(' · ')}</p></div><div class="actions" style="margin-top:0;justify-content:flex-end"><button class="btn btn-blue btn-small" onclick="openSavedSession('${c.id}')">Apri</button><button class="btn btn-danger btn-small" onclick="deleteSessionFromList('${c.id}')">Elimina</button></div></div></div>`).join(''):empty('Nessuna sessione salvata')}
 function validLaps(p){return p.laps.filter((_,i)=>!p.excluded[i])}
 function avg(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:0}
 function consistency(a){if(a.length<2)return 100;let m=avg(a),sd=Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/a.length);return Math.max(0,Math.min(100,100-(sd/m*500)))}
@@ -352,6 +353,16 @@ function renderAnalysis(){let box=$('chronoAnalysis');box.innerHTML=`<div class=
 function chronoNew(){chrono={active:false,running:false,startAt:0,elapsed:0,raf:null,pilots:[]};document.body.classList.remove('chrono-focus','chrono-locked');document.documentElement.classList.remove('chrono-locked');$('chronoSetup').classList.remove('chrono-hidden');$('chronoLive').classList.add('chrono-hidden');$('chronoAnalysis').classList.add('chrono-hidden');buildNameFields();renderChrono()}
 function chronoSave(){let results=chrono.pilots.map(p=>({name:p.name,laps:[...p.laps],excluded:[...p.excluded],best:validLaps(p).length?Math.min(...validLaps(p)):0,average:avg(validLaps(p))}));let did=$('chronoDay').value,d=get('days',did);db.chronoSessions.push({id:uid(),name:$('chronoName').value||'Sessione',dayId:did,date:d?.date||new Date().toISOString().slice(0,10),track:d?.track||'',duration:chrono.elapsed,results});save();alert('Sessione salvata');chronoNew()}
 
+
+
+function deleteSessionFromList(id){
+  let session=db.chronoSessions.find(x=>x.id===id);
+  if(!session)return;
+  if(!confirm(`Eliminare definitivamente "${session.name}"?`))return;
+  db.chronoSessions=db.chronoSessions.filter(x=>x.id!==id);
+  save();
+  renderChrono();
+}
 
 function sessionResultValidLaps(result){
   if(Array.isArray(result.validLaps)) return result.validLaps;
