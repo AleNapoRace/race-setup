@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v1.11</title>
+<title>Race Setup v1.12</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -178,39 +178,15 @@ body.chrono-locked .live-tile{
 .preview-photo{margin-top:8px;max-width:100%;border-radius:12px;border:1px solid var(--line);display:none}
 
 
-.ocr-status{margin-top:9px;padding:10px;border-radius:10px;background:#f4f6f8;border:1px solid var(--line);font-size:13px;display:none}
-.ocr-status.running{display:block;background:#eef5ff;border-color:#b9d2ff}
-.ocr-status.success{display:block;background:#e8f8f1;border-color:#98dabc}
-.ocr-status.warning{display:block;background:#fff6dc;border-color:#e5c66c}
-.ocr-progress{height:7px;background:#dfe4e9;border-radius:999px;overflow:hidden;margin-top:7px}
-.ocr-progress>div{height:100%;width:0;background:#111;transition:width .2s}
-.ocr-result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
-.ocr-result-grid div{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px}
-.ocr-result-grid span{font-size:10px;color:var(--muted);display:block}
-
-.prisma-crop-wrap{display:none;margin-top:10px}
-.prisma-crop-stage{position:relative;display:inline-block;max-width:100%;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#111}
-.prisma-crop-stage img{display:block;max-width:100%;height:auto}
-.prisma-crop-box{position:absolute;border:3px solid #ffcc00;background:rgba(255,204,0,.08);box-shadow:0 0 0 9999px rgba(0,0,0,.42);pointer-events:none}
-.crop-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px}
-.crop-controls label{font-size:11px}
-.crop-controls input[type=range]{width:100%}
-.zone-preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
-.zone-preview canvas{width:100%;border:1px solid var(--line);border-radius:8px;background:white}
-@media(max-width:700px){.crop-controls,.zone-preview{grid-template-columns:1fr}}
-
-@media(max-width:700px){.ocr-result-grid{grid-template-columns:1fr}}
-
 @media(max-width:700px){.analysis-grid{grid-template-columns:repeat(2,1fr)}}
 
 @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.chrono-setup,.name-fields{grid-template-columns:1fr}.pilot-tile{min-height:175px;padding:11px}.pilot-name{font-size:19px}.pilot-current{font-size:25px}.form-grid,.summary{grid-template-columns:1fr}.full{grid-column:auto}.app{padding-bottom:100px}table{font-size:12px}th,td{padding:7px 5px}}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js"></script>
 </head>
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.4 · modifica anagrafiche</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.12 · modifica anagrafiche</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -359,26 +335,8 @@ body.chrono-locked .live-tile{
 <div class="form-section"><h3>Dati meteo da Prisma</h3><p>Scatta o carica una foto e inserisci i valori letti.</p></div>
 <div class="full"><label>Foto Prisma</label>
 <input id="sessionPrismaPhoto" type="file" accept="image/*" onchange="previewPrismaPhoto(event)">
-<p class="muted" style="margin-top:6px">Su iPhone puoi scegliere una foto esistente oppure scattarne una nuova.</p>
+<p class="muted" style="margin-top:6px">Puoi scegliere una foto esistente oppure scattarne una nuova. Inserisci poi manualmente i valori leggibili sul display.</p>
 <img id="sessionPrismaPreview" class="preview-photo" alt="Anteprima Prisma">
-<div class="actions">
-<button type="button" class="btn btn-secondary" onclick="preparePrismaCrop()">Ritaglia display</button>
-<button type="button" id="prismaOcrBtn" class="btn btn-blue" onclick="readPrismaPhotoZones()">Leggi dati dalla foto</button>
-</div>
-<div id="prismaCropWrap" class="prisma-crop-wrap">
-  <p class="muted">Regola il riquadro giallo affinché contenga soltanto il display LCD.</p>
-  <div id="prismaCropStage" class="prisma-crop-stage">
-    <img id="prismaCropImage" alt="Ritaglio display Prisma">
-    <div id="prismaCropBox" class="prisma-crop-box"></div>
-  </div>
-  <div class="crop-controls">
-    <label>Sinistra <input id="cropLeft" type="range" min="0" max="70" value="12" oninput="updatePrismaCropBox()"></label>
-    <label>Destra <input id="cropRight" type="range" min="30" max="100" value="88" oninput="updatePrismaCropBox()"></label>
-    <label>Alto <input id="cropTop" type="range" min="0" max="70" value="14" oninput="updatePrismaCropBox()"></label>
-    <label>Basso <input id="cropBottom" type="range" min="30" max="100" value="79" oninput="updatePrismaCropBox()"></label>
-  </div>
-</div>
-<div id="prismaOcrStatus" class="ocr-status"></div>
 </div>
 <div id="copiedSetupNotice" class="full ok" style="display:none"></div>
 <div><label>Temperatura aria °C</label><input id="sessionAirTemp" type="number" step="0.1"></div>
@@ -440,6 +398,9 @@ body.chrono-locked .live-tile{
 <div><label>Codice *</label><input id="tireCode" required></div><div><label>Posizione</label><select id="tirePosition"><option>Anteriore</option><option>Posteriore</option></select></div><div><label>Marca *</label><input id="tireBrand" required></div><div><label>Modello/mescola</label><input id="tireModel"></div><div><label>Misura</label><input id="tireSize"></div><div><label>Giri iniziali</label><input id="tireInitialLaps" type="number" value="0"></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
 
 <script>
+const APP_VERSION='1.12';
+const APP_BUILD='2026-07-31';
+
 const KEY='raceSetup_v02';
 let db=JSON.parse(localStorage.getItem(KEY)||'{"riders":[],"bikes":[],"circuits":[],"days":[],"sessions":[],"tires":[],"adaImports":[],"chronoSessions":[]}');
 db.circuits=db.circuits||[];
@@ -495,8 +456,6 @@ function openModal(id){
     if(img){img.src='';img.style.display='none'}
     const notice=$('copiedSetupNotice');
     if(notice)notice.style.display='none';
-    const ocrStatus=$('prismaOcrStatus');
-    if(ocrStatus){ocrStatus.className='ocr-status';ocrStatus.innerHTML='';}
   }
   if(dialog && !dialog.open)dialog.showModal();
 }
@@ -548,361 +507,6 @@ function setAutomaticSessionTime(){
 }
 
 
-function preparePrismaCrop(){
-  const status=$('prismaOcrStatus');
-  if(!pendingPrismaPhoto){
-    status.className='ocr-status warning';
-    status.textContent='Prima scegli o scatta una foto del Prisma.';
-    return;
-  }
-  $('prismaCropImage').src=pendingPrismaPhoto;
-  $('prismaCropWrap').style.display='block';
-  setTimeout(updatePrismaCropBox,50);
-}
-
-function updatePrismaCropBox(){
-  const left=Number($('cropLeft')?.value||12);
-  const right=Number($('cropRight')?.value||88);
-  const top=Number($('cropTop')?.value||14);
-  const bottom=Number($('cropBottom')?.value||79);
-  const box=$('prismaCropBox');
-  if(!box)return;
-  box.style.left=left+'%';
-  box.style.top=top+'%';
-  box.style.width=Math.max(5,right-left)+'%';
-  box.style.height=Math.max(5,bottom-top)+'%';
-}
-
-async function loadImageFromDataUrl(dataUrl){
-  const img=new Image();
-  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=dataUrl});
-  return img;
-}
-
-function makeCropCanvas(img){
-  const left=Number($('cropLeft')?.value||12)/100;
-  const right=Number($('cropRight')?.value||88)/100;
-  const top=Number($('cropTop')?.value||14)/100;
-  const bottom=Number($('cropBottom')?.value||79)/100;
-  const sx=Math.round(img.naturalWidth*left);
-  const sy=Math.round(img.naturalHeight*top);
-  const sw=Math.max(20,Math.round(img.naturalWidth*(right-left)));
-  const sh=Math.max(20,Math.round(img.naturalHeight*(bottom-top)));
-  const scale=Math.max(1,Math.min(4,1800/sw));
-  const canvas=document.createElement('canvas');
-  canvas.width=Math.round(sw*scale);
-  canvas.height=Math.round(sh*scale);
-  const ctx=canvas.getContext('2d',{willReadFrequently:true});
-  ctx.drawImage(img,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
-  return canvas;
-}
-
-function makeZoneCanvas(source,topRatio,bottomRatio,threshold=145,invert=false){
-  const sy=Math.round(source.height*topRatio);
-  const sh=Math.max(12,Math.round(source.height*(bottomRatio-topRatio)));
-  const canvas=document.createElement('canvas');
-  canvas.width=source.width;
-  canvas.height=sh;
-  const ctx=canvas.getContext('2d',{willReadFrequently:true});
-  ctx.drawImage(source,0,sy,source.width,sh,0,0,source.width,sh);
-  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
-  const d=image.data;
-  for(let i=0;i<d.length;i+=4){
-    const gray=.299*d[i]+.587*d[i+1]+.114*d[i+2];
-    let v=gray>threshold?255:0;
-    if(invert)v=255-v;
-    d[i]=d[i+1]=d[i+2]=v;
-  }
-  ctx.putImageData(image,0,0);
-  return canvas;
-}
-
-function selectPlausibleNumber(text,min,max,decimalsHint=null){
-  const nums=(String(text||'').match(/[-+]?\d+(?:[.,]\d+)?/g)||[])
-    .map(normalizeOcrNumber)
-    .filter(v=>v!==''&&v>=min&&v<=max);
-  if(!nums.length)return '';
-  if(decimalsHint!==null){
-    const preferred=nums.filter(v=>{
-      const s=String(v);
-      return s.includes('.') && s.split('.')[1].length>=decimalsHint;
-    });
-    if(preferred.length)return preferred[0];
-  }
-  return nums[0];
-}
-
-async function recognizeNumericZone(worker,canvas){
-  const attempts=[];
-  for(const psm of [7,6,13]){
-    await worker.setParameters({
-      tessedit_pageseg_mode:String(psm),
-      tessedit_char_whitelist:'0123456789.,-'
-    });
-    const {data}=await worker.recognize(canvas);
-    attempts.push({text:data.text||'',confidence:Number(data.confidence||0)});
-  }
-  attempts.sort((a,b)=>b.confidence-a.confidence);
-  return attempts[0]||{text:'',confidence:0};
-}
-
-async function readPrismaPhotoZones(){
-  const status=$('prismaOcrStatus');
-  const button=$('prismaOcrBtn');
-  if(!pendingPrismaPhoto){
-    status.className='ocr-status warning';
-    status.textContent='Prima scegli o scatta una foto del Prisma.';
-    return;
-  }
-  if(typeof Tesseract==='undefined'){
-    status.className='ocr-status warning';
-    status.textContent='Il lettore OCR non è disponibile. Controlla la connessione Internet.';
-    return;
-  }
-
-  if($('prismaCropWrap').style.display==='none')preparePrismaCrop();
-
-  button.disabled=true;
-  status.className='ocr-status running';
-  status.innerHTML='Preparazione delle zone del display…<div class="ocr-progress"><div id="ocrProgressBar"></div></div>';
-
-  let worker;
-  try{
-    const img=await loadImageFromDataUrl(pendingPrismaPhoto);
-    const display=makeCropCanvas(img);
-
-    // Relative bands inside the cropped LCD. They match the Prisma screen layout.
-    const definitions=[
-      {key:'airTemp',label:'Temperatura',top:0.00,bottom:0.18,min:-30,max:80,dec:1},
-      {key:'atmosphericPressure',label:'Pressione',top:0.20,bottom:0.40,min:700,max:1200,dec:1},
-      {key:'humidity',label:'Umidità',top:0.35,bottom:0.54,min:0,max:100,dec:1},
-      {key:'airDensity',label:'Densità aria',top:0.50,bottom:0.70,min:.5,max:1.8,dec:2},
-      {key:'altitude',label:'Altitudine',top:0.66,bottom:0.88,min:-1000,max:10000,dec:1}
-    ];
-
-    worker=await Tesseract.createWorker('eng',1,{
-      logger:m=>{
-        if(m.status==='recognizing text'){
-          const bar=$('ocrProgressBar');
-          if(bar)bar.style.width=Math.round((m.progress||0)*100)+'%';
-        }
-      }
-    });
-
-    const values={};
-    const debug=[];
-    for(let i=0;i<definitions.length;i++){
-      const def=definitions[i];
-      status.firstChild.textContent=`Lettura ${def.label}…`;
-      const variants=[
-        makeZoneCanvas(display,def.top,def.bottom,125,false),
-        makeZoneCanvas(display,def.top,def.bottom,150,false),
-        makeZoneCanvas(display,def.top,def.bottom,175,false),
-        makeZoneCanvas(display,def.top,def.bottom,150,true)
-      ];
-      let candidates=[];
-      for(const canvas of variants){
-        const rec=await recognizeNumericZone(worker,canvas);
-        const value=selectPlausibleNumber(rec.text,def.min,def.max,def.dec);
-        if(value!=='')candidates.push({value,confidence:rec.confidence,text:rec.text});
-      }
-      candidates.sort((a,b)=>b.confidence-a.confidence);
-      values[def.key]=candidates[0]?.value??'';
-      debug.push(`${def.label}: ${candidates[0]?.text?.trim()||'—'} (${Math.round(candidates[0]?.confidence||0)}%)`);
-    }
-
-    if(values.airTemp!=='')sessionAirTemp.value=values.airTemp;
-    if(values.atmosphericPressure!=='')sessionAtmosphericPressure.value=values.atmosphericPressure;
-    if(values.humidity!=='')sessionHumidity.value=values.humidity;
-    if(values.airDensity!=='')sessionAirDensity.value=values.airDensity;
-    if(values.altitude!=='')sessionAltitude.value=values.altitude;
-
-    const found=Object.values(values).filter(v=>v!=='').length;
-    status.className=found>=4?'ocr-status success':'ocr-status warning';
-    status.innerHTML=`<strong>${found>=4?'Dati rilevati: controllali prima di salvare.':'Lettura parziale: regola meglio il riquadro giallo e riprova.'}</strong>
-      <div class="ocr-result-grid">
-        <div><span>Temperatura</span>${values.airTemp!==''?values.airTemp+' °C':'Non rilevata'}</div>
-        <div><span>Pressione</span>${values.atmosphericPressure!==''?values.atmosphericPressure+' hPa':'Non rilevata'}</div>
-        <div><span>Umidità RH</span>${values.humidity!==''?values.humidity+' %':'Non rilevata'}</div>
-        <div><span>Densità aria</span>${values.airDensity!==''?values.airDensity:'Non rilevata'}</div>
-        <div><span>Altitudine</span>${values.altitude!==''?values.altitude+' m':'Non rilevata'}</div>
-      </div>
-      <details style="margin-top:9px"><summary>Dettagli lettura</summary><pre style="white-space:pre-wrap;font-size:11px;background:#fff;padding:8px;border-radius:8px">${esc(debug.join('\n'))}</pre></details>
-      <p style="margin:8px 0 0">Tutti i campi restano modificabili.</p>`;
-  }catch(err){
-    console.error(err);
-    status.className='ocr-status warning';
-    status.textContent='Lettura non riuscita. Regola il ritaglio affinché contenga soltanto il display e riprova.';
-  }finally{
-    if(worker)await worker.terminate();
-    button.disabled=false;
-  }
-}
-
-function normalizeOcrNumber(value){
-  if(value===undefined||value===null)return '';
-  let s=String(value)
-    .replace(/[Oo]/g,'0')
-    .replace(/[Il|]/g,'1')
-    .replace(/,/g,'.')
-    .replace(/[^\d.\-]/g,'');
-  if(!s || s==='-' || s==='.')return '';
-  const firstDot=s.indexOf('.');
-  if(firstDot>=0)s=s.slice(0,firstDot+1)+s.slice(firstDot+1).replace(/\./g,'');
-  const n=Number(s);
-  return Number.isFinite(n)?n:'';
-}
-
-function extractNumbers(line){
-  return (String(line).match(/[-+]?\d+(?:[.,]\d+)?/g)||[])
-    .map(normalizeOcrNumber)
-    .filter(v=>v!=='');
-}
-
-function chooseByRange(values,min,max,preferredDecimals=null){
-  let candidates=values.filter(v=>v>=min&&v<=max);
-  if(!candidates.length)return '';
-  if(preferredDecimals!==null){
-    const withDecimals=candidates.filter(v=>{
-      const s=String(v);
-      return s.includes('.') && s.split('.')[1].length>=preferredDecimals;
-    });
-    if(withDecimals.length)candidates=withDecimals;
-  }
-  return candidates[0];
-}
-
-function readLabeledValue(lines,patterns,min,max,preferredDecimals=null){
-  for(let i=0;i<lines.length;i++){
-    if(!patterns.some(p=>p.test(lines[i])))continue;
-    const same=chooseByRange(extractNumbers(lines[i]),min,max,preferredDecimals);
-    if(same!=='')return same;
-    for(let j=i+1;j<=Math.min(lines.length-1,i+2);j++){
-      const next=chooseByRange(extractNumbers(lines[j]),min,max,preferredDecimals);
-      if(next!=='')return next;
-    }
-  }
-  return '';
-}
-
-function parsePrismaOcr(text){
-  const lines=String(text||'')
-    .split(/\r?\n/)
-    .map(x=>x.replace(/\s+/g,' ').trim())
-    .filter(Boolean);
-
-  // Deliberately no generic fallback: a value is accepted only when it is
-  // found close to the correct Prisma label.
-  const result={
-    airTemp:readLabeledValue(lines,[/\bTEMP\b/i,/TEMPERAT/i],-30,80),
-    atmosphericPressure:readLabeledValue(lines,[/\bPRES\b/i,/PRESS/i],700,1200),
-    humidity:readLabeledValue(lines,[/\bRH\b/i,/HUMID/i],0,100),
-    airDensity:readLabeledValue(lines,[/AIR\s*DENS/i,/DENSITY/i],0.5,1.8,2),
-    altitude:readLabeledValue(lines,[/ALTITUDE/i,/\bALT\b/i],-1000,10000)
-  };
-
-  // Prevent the same short OCR artefact (especially "1") from filling
-  // several unrelated fields.
-  const entries=Object.entries(result).filter(([,v])=>v!=='');
-  const counts={};
-  entries.forEach(([,v])=>{const k=String(v);counts[k]=(counts[k]||0)+1});
-  entries.forEach(([key,v])=>{
-    if(counts[String(v)]>1 && (v===0 || v===1))result[key]='';
-  });
-
-  return {values:result,lines};
-}
-
-async function preprocessPrismaImage(dataUrl){
-  const img=new Image();
-  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=dataUrl});
-  const scale=Math.max(1,Math.min(3,1800/img.width));
-  const canvas=document.createElement('canvas');
-  canvas.width=Math.round(img.width*scale);
-  canvas.height=Math.round(img.height*scale);
-  const ctx=canvas.getContext('2d',{willReadFrequently:true});
-  ctx.drawImage(img,0,0,canvas.width,canvas.height);
-  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
-  const d=image.data;
-  for(let i=0;i<d.length;i+=4){
-    const gray=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-    // Strong contrast helps with the Prisma LCD.
-    const value=gray>145?255:0;
-    d[i]=d[i+1]=d[i+2]=value;
-  }
-  ctx.putImageData(image,0,0);
-  return canvas;
-}
-
-async function readPrismaPhoto(){
-  const status=$('prismaOcrStatus');
-  const button=$('prismaOcrBtn');
-  if(!pendingPrismaPhoto){
-    status.className='ocr-status warning';
-    status.textContent='Prima scegli o scatta una foto del display Prisma.';
-    return;
-  }
-  if(typeof Tesseract==='undefined'){
-    status.className='ocr-status warning';
-    status.textContent='Il lettore OCR non è disponibile. Controlla la connessione Internet e aggiorna la pagina.';
-    return;
-  }
-
-  button.disabled=true;
-  status.className='ocr-status running';
-  status.innerHTML='Preparazione immagine…<div class="ocr-progress"><div id="ocrProgressBar"></div></div>';
-
-  let worker;
-  try{
-    const canvas=await preprocessPrismaImage(pendingPrismaPhoto);
-    worker=await Tesseract.createWorker('eng',1,{
-      logger:m=>{
-        if(m.status==='recognizing text'){
-          const pct=Math.round((m.progress||0)*100);
-          const bar=$('ocrProgressBar');
-          if(bar)bar.style.width=pct+'%';
-          status.firstChild.textContent=`Lettura display… ${pct}%`;
-        }
-      }
-    });
-    await worker.setParameters({
-      tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-%° ',
-      preserve_interword_spaces:'1'
-    });
-    const {data}=await worker.recognize(canvas);
-    const parsed=parsePrismaOcr(data.text||'');
-    const values=parsed.values;
-
-    if(values.airTemp!=='')sessionAirTemp.value=values.airTemp;
-    if(values.atmosphericPressure!=='')sessionAtmosphericPressure.value=values.atmosphericPressure;
-    if(values.humidity!=='')sessionHumidity.value=values.humidity;
-    if(values.airDensity!=='')sessionAirDensity.value=values.airDensity;
-    if(values.altitude!=='')sessionAltitude.value=values.altitude;
-
-    const found=Object.values(values).filter(v=>v!=='').length;
-    status.className=found>=4?'ocr-status success':'ocr-status warning';
-    status.innerHTML=`<strong>${found>=4?'Dati letti dalla foto.':'Lettura prudente: alcuni dati non sono stati inseriti.'}</strong>
-      <div class="ocr-result-grid">
-        <div><span>Temperatura aria</span>${values.airTemp!==''?values.airTemp+' °C':'Non rilevata'}</div>
-        <div><span>Pressione</span>${values.atmosphericPressure!==''?values.atmosphericPressure+' hPa':'Non rilevata'}</div>
-        <div><span>Umidità RH</span>${values.humidity!==''?values.humidity+' %':'Non rilevata'}</div>
-        <div><span>Densità aria</span>${values.airDensity!==''?values.airDensity:'Non rilevata'}</div>
-        <div><span>Altitudine</span>${values.altitude!==''?values.altitude+' m':'Non rilevata'}</div>
-      </div>
-      <details style="margin-top:9px"><summary>Mostra testo letto dall’OCR</summary>
-        <pre style="white-space:pre-wrap;font-size:11px;background:#fff;padding:8px;border-radius:8px">${esc((data.text||'').trim()||'Nessun testo riconosciuto')}</pre>
-      </details>
-      <p style="margin:8px 0 0">I campi restano modificabili. I valori non riconosciuti non vengono più riempiti con numeri casuali.</p>`;
-  }catch(error){
-    console.error(error);
-    status.className='ocr-status warning';
-    status.textContent='Non sono riuscito a leggere il display. Prova con una foto più frontale, nitida e senza riflessi.';
-  }finally{
-    if(worker)await worker.terminate();
-    button.disabled=false;
-  }
-}
-
 function previewPrismaPhoto(event){
   const file=event.target.files?.[0];
   if(!file)return;
@@ -912,7 +516,6 @@ function previewPrismaPhoto(event){
     const img=$('sessionPrismaPreview');
     img.src=pendingPrismaPhoto;
     img.style.display='block';
-    setTimeout(preparePrismaCrop,100);
   };
   reader.readAsDataURL(file);
 }
@@ -1040,7 +643,9 @@ function editDay(id){
 }
 
 const previousSetupFields=[
-  'frontGear','rearGear','pilotJet','mainJet','needleClip','airScrew',
+  'frontGear','rearGear',
+  'airTemp','atmosphericPressure','humidity','airDensity','altitude','weather',
+  'pilotJet','mainJet','needleClip','airScrew',
   'tireBrand','tireType','tireCompound',
   'frontWarmerTemp','frontWarmerPressure','rearWarmerTemp','rearWarmerPressure',
   'forkHeight','sagF','forkPreload','forkCompression','forkRebound',
@@ -1070,7 +675,7 @@ function copyPreviousSessionData(){
   sessionNumber.value=Math.max(0,...numbers)+1;
 
   if(notice){
-    notice.innerHTML=`Dati di assetto, gomme e termocoperte copiati dal turno precedente: <strong>${esc(previous.type)} ${esc(previous.number||'')}</strong>. Tutti i valori restano modificabili.`;
+    notice.innerHTML=`Dati meteo, assetto, gomme e termocoperte copiati dal turno precedente: <strong>${esc(previous.type)} ${esc(previous.number||'')}</strong>. Tutti i valori restano modificabili.`;
     notice.style.display='block';
   }
 }
@@ -1550,6 +1155,14 @@ document.querySelectorAll('dialog').forEach(dialog=>{
   });
 });
 
+
+function updateVisibleVersion(){
+  document.querySelectorAll('[data-app-version]').forEach(el=>el.textContent='v'+APP_VERSION);
+  document.querySelectorAll('.app-version,#appVersion').forEach(el=>el.textContent='v'+APP_VERSION);
+  document.title='Race Setup v'+APP_VERSION;
+}
+
+updateVisibleVersion();
 setAutomaticDayDateTime();buildNameFields();render();
 </script>
 </body></html>
