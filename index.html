@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v1.7</title>
+<title>Race Setup v1.9</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -458,6 +458,7 @@ function openModal(id){
     if(!dialog.dataset.editId){
       dayModalTitle.textContent='Nuova giornata';
       daySaveBtn.textContent='Inizia giornata';
+      if($('dayCircuit'))$('dayCircuit').value='';
     }
   }
   if(id==='sessionModal'){pendingPrismaPhoto='';const img=$('sessionPrismaPreview');if(img){img.src='';img.style.display='none'}}
@@ -509,9 +510,9 @@ function circuitLabel(c){
   if(!c)return 'Circuito non indicato';
   return `${c.name}${c.layout?' · '+c.layout:''}${c.location?' ('+c.location+')':''}`;
 }
-function dayCircuit(d){return get('circuits',d.circuitId)}
+function getDayCircuit(d){return get('circuits',d.circuitId)}
 function dayTrackName(d){
-  const c=dayCircuit(d);
+  const c=getDayCircuit(d);
   return c?`${c.name}${c.layout?' · '+c.layout:''}`:(d.track||'Circuito');
 }
 let pendingPrismaPhoto='';
@@ -746,7 +747,7 @@ function saveCircuit(e){
   if(returnToDay){
     setTimeout(()=>{
       openModal('dayModal');
-      dayCircuit.value=c.id;
+      $('dayCircuit').value=c.id;
     },50);
   }
 }
@@ -756,6 +757,44 @@ function openCircuitFromDay(){
   circuitModal.dataset.returnToDay='1';
 }
 
+
+function deleteSession(id){
+  const session=get('sessions',id);
+  if(!session)return;
+  const label=`${session.type||'Turno'} ${session.number||''}`.trim();
+  if(!confirm(`Eliminare definitivamente "${label}"?\n\nVerranno rimossi anche gli eventuali dati Alfano/ADA collegati al turno.`))return;
+
+  if(session.adaId){
+    db.adaImports=db.adaImports.filter(x=>x.id!==session.adaId);
+  }
+  db.sessions=db.sessions.filter(x=>x.id!==id);
+
+  // Scollega eventuali sessioni crono senza cancellarle.
+  db.chronoSessions.forEach(c=>{
+    if(c.turnId===id)c.turnId='';
+  });
+
+  save();
+}
+
+function deleteDay(id){
+  const day=get('days',id);
+  if(!day)return;
+
+  const linkedSessions=db.sessions.filter(s=>s.dayId===id);
+  const linkedChrono=db.chronoSessions.filter(c=>c.dayId===id);
+  const message=`Eliminare definitivamente la giornata del ${fmtDate(day.date)} a ${dayTrackName(day)}?\n\nSaranno eliminati anche:\n- ${linkedSessions.length} turni\n- ${linkedChrono.length} sessioni crono\n- gli eventuali file Alfano/ADA collegati\n\nQuesta operazione non può essere annullata.`;
+
+  if(!confirm(message))return;
+
+  const adaIds=new Set(linkedSessions.map(s=>s.adaId).filter(Boolean));
+  db.adaImports=db.adaImports.filter(x=>!adaIds.has(x.id));
+  db.sessions=db.sessions.filter(s=>s.dayId!==id);
+  db.chronoSessions=db.chronoSessions.filter(c=>c.dayId!==id);
+  db.days=db.days.filter(d=>d.id!==id);
+
+  save();
+}
 function editDay(id){
   const d=get('days',id);if(!d)return;
   dayModal.dataset.keepEdit='1';
@@ -768,7 +807,7 @@ function editDay(id){
   dayType.value=d.type||'Allenamento';
   dayRider.value=d.riderId||'';
   dayBike.value=d.bikeId||'';
-  dayCircuit.value=d.circuitId||'';
+  $('dayCircuit').value=d.circuitId||'';
   dayGoal.value=d.goal||'';
   dayNotes.value=d.notes||'';
 }
@@ -811,7 +850,9 @@ function copyPreviousSessionData(){
 function saveDay(e){
   e.preventDefault();
   const now=new Date();
-  const circuit=get('circuits',dayCircuit.value);
+  const selectedCircuitId=$('dayCircuit').value;
+  if(!selectedCircuitId){alert('Seleziona il circuito.');return;}
+  const circuit=get('circuits',selectedCircuitId);
   const editId=dayModal.dataset.editId||'';
   const existing=editId?get('days',editId):null;
   const record={
@@ -822,7 +863,7 @@ function saveDay(e){
     type:dayType.value,
     riderId:dayRider.value,
     bikeId:dayBike.value,
-    circuitId:dayCircuit.value,
+    circuitId:selectedCircuitId,
     track:circuit?.name||'',
     layout:circuit?.layout||'',
     goal:dayGoal.value,
@@ -967,13 +1008,24 @@ function fillChronoTurns(){
 }
 function fillSelects(){
   const currentChronoDay=$('chronoDay')?.value||'';
+  const currentRider=$('dayRider')?.value||'';
+  const currentBike=$('dayBike')?.value||'';
+  const currentCircuit=$('dayCircuit')?.value||'';
+  const currentSessionDay=$('sessionDay')?.value||'';
+
   fill('chronoDay',db.days,x=>`${fmtDate(x.date)} · ${dayTrackName(x)}`,'Nessuna giornata');
   if(currentChronoDay && [...$('chronoDay').options].some(o=>o.value===currentChronoDay))$('chronoDay').value=currentChronoDay;
   fillChronoTurns();
+
   fill('dayRider',db.riders,x=>x.name);
   fill('dayBike',db.bikes,x=>bikeLabel(x));
   fill('dayCircuit',db.circuits,c=>circuitLabel(c));
   fill('sessionDay',db.days,x=>`${fmtDate(x.date)} · ${dayTrackName(x)}`);
+
+  if(currentRider && [...$('dayRider').options].some(o=>o.value===currentRider))$('dayRider').value=currentRider;
+  if(currentBike && [...$('dayBike').options].some(o=>o.value===currentBike))$('dayBike').value=currentBike;
+  if(currentCircuit && [...$('dayCircuit').options].some(o=>o.value===currentCircuit))$('dayCircuit').value=currentCircuit;
+  if(currentSessionDay && [...$('sessionDay').options].some(o=>o.value===currentSessionDay))$('sessionDay').value=currentSessionDay;
 }
 function deleteCircuit(id){
   const used=db.days.some(d=>d.circuitId===id);
@@ -1001,11 +1053,11 @@ fillSelects()
 }
 function dayCard(d,compact=false){
 let r=get('riders',d.riderId),b=get('bikes',d.bikeId),ss=db.sessions.filter(s=>s.dayId===d.id);
-return `<div class="${compact?'item':'card'}"><div class="row"><div><h3>${fmtDate(d.date)} · ${esc(dayTrackName(d))}</h3><p>${esc(r?.name||'Pilota')} · ${esc(b?bikeLabel(b):'Moto')} · ${esc(d.type)}</p></div><div class="actions" style="margin-top:0"><span class="badge gray">${ss.length} turni</span>${compact?'':`<button class="btn btn-secondary btn-small" onclick="editDay('${d.id}')">Modifica</button>`}</div></div>${compact?'':`<div class="list" style="margin-top:10px">${ss.length?ss.map(sessionCard).join(''):empty('Nessun turno')}</div>`}</div>`
+return `<div class="${compact?'item':'card'}"><div class="row"><div><h3>${fmtDate(d.date)} · ${esc(dayTrackName(d))}</h3><p>${esc(r?.name||'Pilota')} · ${esc(b?bikeLabel(b):'Moto')} · ${esc(d.type)}</p></div><div class="actions" style="margin-top:0"><span class="badge gray">${ss.length} turni</span>${compact?'':`<button class="btn btn-secondary btn-small" onclick="editDay('${d.id}')">Modifica</button><button class="btn btn-danger btn-small" onclick="deleteDay('${d.id}')">Elimina</button>`}</div></div>${compact?'':`<div class="list" style="margin-top:10px">${ss.length?ss.map(sessionCard).join(''):empty('Nessun turno')}</div>`}</div>`
 }
 function sessionCard(s){
 let best=s.officialBest||s.manualBest||'—';
-return `<div class="item"><div class="row"><div><h3>${esc(s.type)} ${esc(s.number)} <span class="badge ${s.source==='ADA'?'green':'gray'}">${esc(s.source)}</span></h3><p>Best ${esc(best)} · Vel. max ${esc(s.maxSpeed||'—')} km/h · Rapporto ${esc(s.frontGear||'—')}/${esc(s.rearGear||'—')}</p><p>${s.airTemp?'Aria '+esc(s.airTemp)+' °C · ':''}${s.trackTemp?'Asfalto '+esc(s.trackTemp)+' °C · ':''}${s.tireBrand?esc(s.tireBrand)+' '+esc(s.tireCompound||''):''}</p><p>${esc(s.feedback||'Nessuna nota')}</p></div><div class="actions" style="margin-top:0"><button class="btn btn-secondary btn-small" onclick="editSession('${s.id}')">Modifica</button>${s.adaId?`<button class="btn btn-secondary btn-small" onclick="showStoredImport('${s.adaId}')">Analisi</button>`:''}</div></div></div>`
+return `<div class="item"><div class="row"><div><h3>${esc(s.type)} ${esc(s.number)} <span class="badge ${s.source==='ADA'?'green':'gray'}">${esc(s.source)}</span></h3><p>Best ${esc(best)} · Vel. max ${esc(s.maxSpeed||'—')} km/h · Rapporto ${esc(s.frontGear||'—')}/${esc(s.rearGear||'—')}</p><p>${s.airTemp?'Aria '+esc(s.airTemp)+' °C · ':''}${s.trackTemp?'Asfalto '+esc(s.trackTemp)+' °C · ':''}${s.tireBrand?esc(s.tireBrand)+' '+esc(s.tireCompound||''):''}</p><p>${esc(s.feedback||'Nessuna nota')}</p></div><div class="actions" style="margin-top:0"><button class="btn btn-secondary btn-small" onclick="editSession('${s.id}')">Modifica</button>${s.adaId?`<button class="btn btn-secondary btn-small" onclick="showStoredImport('${s.adaId}')">Analisi</button>`:''}<button class="btn btn-danger btn-small" onclick="deleteSession('${s.id}')">Elimina</button></div></div></div>`
 }
 
 

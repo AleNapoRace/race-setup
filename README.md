@@ -1,15 +1,12 @@
-# Race Setup v1.7
+# Race Setup v1.9
 
-## Lettura automatica Prisma
-Dopo aver scelto o scattato la foto del display Prisma, il pulsante
-**Leggi dati dalla foto** utilizza OCR nel browser e prova a compilare:
-
-- temperatura aria;
-- pressione atmosferica;
-- umidità relativa RH;
-- densità aria;
-- altitudine.
-
-I dati riconosciuti restano sempre modificabili e devono essere controllati
-prima del salvataggio. La prima lettura richiede una connessione Internet
-per caricare il motore OCR Tesseract.js.
+## Eliminazione dati
+- pulsante Elimina su ogni giornata;
+- pulsante Elimina su ogni turno;
+- conferma obbligatoria prima della cancellazione;
+- eliminando un turno vengono rimossi anche gli eventuali dati Alfano/ADA collegati;
+- eliminando una giornata vengono eliminati:
+  - tutti i turni collegati;
+  - tutte le sessioni crono collegate;
+  - tutti i file Alfano/ADA collegati;
+- il messaggio di conferma mostra quanti elementi saranno cancellati.
