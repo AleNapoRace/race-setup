@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v1.10</title>
+<title>Race Setup v1.11</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -187,6 +187,18 @@ body.chrono-locked .live-tile{
 .ocr-result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
 .ocr-result-grid div{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px}
 .ocr-result-grid span{font-size:10px;color:var(--muted);display:block}
+
+.prisma-crop-wrap{display:none;margin-top:10px}
+.prisma-crop-stage{position:relative;display:inline-block;max-width:100%;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#111}
+.prisma-crop-stage img{display:block;max-width:100%;height:auto}
+.prisma-crop-box{position:absolute;border:3px solid #ffcc00;background:rgba(255,204,0,.08);box-shadow:0 0 0 9999px rgba(0,0,0,.42);pointer-events:none}
+.crop-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px}
+.crop-controls label{font-size:11px}
+.crop-controls input[type=range]{width:100%}
+.zone-preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.zone-preview canvas{width:100%;border:1px solid var(--line);border-radius:8px;background:white}
+@media(max-width:700px){.crop-controls,.zone-preview{grid-template-columns:1fr}}
+
 @media(max-width:700px){.ocr-result-grid{grid-template-columns:1fr}}
 
 @media(max-width:700px){.analysis-grid{grid-template-columns:repeat(2,1fr)}}
@@ -350,7 +362,21 @@ body.chrono-locked .live-tile{
 <p class="muted" style="margin-top:6px">Su iPhone puoi scegliere una foto esistente oppure scattarne una nuova.</p>
 <img id="sessionPrismaPreview" class="preview-photo" alt="Anteprima Prisma">
 <div class="actions">
-<button type="button" id="prismaOcrBtn" class="btn btn-blue" onclick="readPrismaPhoto()">Leggi dati dalla foto</button>
+<button type="button" class="btn btn-secondary" onclick="preparePrismaCrop()">Ritaglia display</button>
+<button type="button" id="prismaOcrBtn" class="btn btn-blue" onclick="readPrismaPhotoZones()">Leggi dati dalla foto</button>
+</div>
+<div id="prismaCropWrap" class="prisma-crop-wrap">
+  <p class="muted">Regola il riquadro giallo affinché contenga soltanto il display LCD.</p>
+  <div id="prismaCropStage" class="prisma-crop-stage">
+    <img id="prismaCropImage" alt="Ritaglio display Prisma">
+    <div id="prismaCropBox" class="prisma-crop-box"></div>
+  </div>
+  <div class="crop-controls">
+    <label>Sinistra <input id="cropLeft" type="range" min="0" max="70" value="12" oninput="updatePrismaCropBox()"></label>
+    <label>Destra <input id="cropRight" type="range" min="30" max="100" value="88" oninput="updatePrismaCropBox()"></label>
+    <label>Alto <input id="cropTop" type="range" min="0" max="70" value="14" oninput="updatePrismaCropBox()"></label>
+    <label>Basso <input id="cropBottom" type="range" min="30" max="100" value="79" oninput="updatePrismaCropBox()"></label>
+  </div>
 </div>
 <div id="prismaOcrStatus" class="ocr-status"></div>
 </div>
@@ -519,6 +545,198 @@ let pendingPrismaPhoto='';
 function setAutomaticSessionTime(){
   const now=new Date();
   if($('sessionTimeDisplay'))$('sessionTimeDisplay').value=now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+}
+
+
+function preparePrismaCrop(){
+  const status=$('prismaOcrStatus');
+  if(!pendingPrismaPhoto){
+    status.className='ocr-status warning';
+    status.textContent='Prima scegli o scatta una foto del Prisma.';
+    return;
+  }
+  $('prismaCropImage').src=pendingPrismaPhoto;
+  $('prismaCropWrap').style.display='block';
+  setTimeout(updatePrismaCropBox,50);
+}
+
+function updatePrismaCropBox(){
+  const left=Number($('cropLeft')?.value||12);
+  const right=Number($('cropRight')?.value||88);
+  const top=Number($('cropTop')?.value||14);
+  const bottom=Number($('cropBottom')?.value||79);
+  const box=$('prismaCropBox');
+  if(!box)return;
+  box.style.left=left+'%';
+  box.style.top=top+'%';
+  box.style.width=Math.max(5,right-left)+'%';
+  box.style.height=Math.max(5,bottom-top)+'%';
+}
+
+async function loadImageFromDataUrl(dataUrl){
+  const img=new Image();
+  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=dataUrl});
+  return img;
+}
+
+function makeCropCanvas(img){
+  const left=Number($('cropLeft')?.value||12)/100;
+  const right=Number($('cropRight')?.value||88)/100;
+  const top=Number($('cropTop')?.value||14)/100;
+  const bottom=Number($('cropBottom')?.value||79)/100;
+  const sx=Math.round(img.naturalWidth*left);
+  const sy=Math.round(img.naturalHeight*top);
+  const sw=Math.max(20,Math.round(img.naturalWidth*(right-left)));
+  const sh=Math.max(20,Math.round(img.naturalHeight*(bottom-top)));
+  const scale=Math.max(1,Math.min(4,1800/sw));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.round(sw*scale);
+  canvas.height=Math.round(sh*scale);
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(img,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
+  return canvas;
+}
+
+function makeZoneCanvas(source,topRatio,bottomRatio,threshold=145,invert=false){
+  const sy=Math.round(source.height*topRatio);
+  const sh=Math.max(12,Math.round(source.height*(bottomRatio-topRatio)));
+  const canvas=document.createElement('canvas');
+  canvas.width=source.width;
+  canvas.height=sh;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(source,0,sy,source.width,sh,0,0,source.width,sh);
+  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const d=image.data;
+  for(let i=0;i<d.length;i+=4){
+    const gray=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+    let v=gray>threshold?255:0;
+    if(invert)v=255-v;
+    d[i]=d[i+1]=d[i+2]=v;
+  }
+  ctx.putImageData(image,0,0);
+  return canvas;
+}
+
+function selectPlausibleNumber(text,min,max,decimalsHint=null){
+  const nums=(String(text||'').match(/[-+]?\d+(?:[.,]\d+)?/g)||[])
+    .map(normalizeOcrNumber)
+    .filter(v=>v!==''&&v>=min&&v<=max);
+  if(!nums.length)return '';
+  if(decimalsHint!==null){
+    const preferred=nums.filter(v=>{
+      const s=String(v);
+      return s.includes('.') && s.split('.')[1].length>=decimalsHint;
+    });
+    if(preferred.length)return preferred[0];
+  }
+  return nums[0];
+}
+
+async function recognizeNumericZone(worker,canvas){
+  const attempts=[];
+  for(const psm of [7,6,13]){
+    await worker.setParameters({
+      tessedit_pageseg_mode:String(psm),
+      tessedit_char_whitelist:'0123456789.,-'
+    });
+    const {data}=await worker.recognize(canvas);
+    attempts.push({text:data.text||'',confidence:Number(data.confidence||0)});
+  }
+  attempts.sort((a,b)=>b.confidence-a.confidence);
+  return attempts[0]||{text:'',confidence:0};
+}
+
+async function readPrismaPhotoZones(){
+  const status=$('prismaOcrStatus');
+  const button=$('prismaOcrBtn');
+  if(!pendingPrismaPhoto){
+    status.className='ocr-status warning';
+    status.textContent='Prima scegli o scatta una foto del Prisma.';
+    return;
+  }
+  if(typeof Tesseract==='undefined'){
+    status.className='ocr-status warning';
+    status.textContent='Il lettore OCR non è disponibile. Controlla la connessione Internet.';
+    return;
+  }
+
+  if($('prismaCropWrap').style.display==='none')preparePrismaCrop();
+
+  button.disabled=true;
+  status.className='ocr-status running';
+  status.innerHTML='Preparazione delle zone del display…<div class="ocr-progress"><div id="ocrProgressBar"></div></div>';
+
+  let worker;
+  try{
+    const img=await loadImageFromDataUrl(pendingPrismaPhoto);
+    const display=makeCropCanvas(img);
+
+    // Relative bands inside the cropped LCD. They match the Prisma screen layout.
+    const definitions=[
+      {key:'airTemp',label:'Temperatura',top:0.00,bottom:0.18,min:-30,max:80,dec:1},
+      {key:'atmosphericPressure',label:'Pressione',top:0.20,bottom:0.40,min:700,max:1200,dec:1},
+      {key:'humidity',label:'Umidità',top:0.35,bottom:0.54,min:0,max:100,dec:1},
+      {key:'airDensity',label:'Densità aria',top:0.50,bottom:0.70,min:.5,max:1.8,dec:2},
+      {key:'altitude',label:'Altitudine',top:0.66,bottom:0.88,min:-1000,max:10000,dec:1}
+    ];
+
+    worker=await Tesseract.createWorker('eng',1,{
+      logger:m=>{
+        if(m.status==='recognizing text'){
+          const bar=$('ocrProgressBar');
+          if(bar)bar.style.width=Math.round((m.progress||0)*100)+'%';
+        }
+      }
+    });
+
+    const values={};
+    const debug=[];
+    for(let i=0;i<definitions.length;i++){
+      const def=definitions[i];
+      status.firstChild.textContent=`Lettura ${def.label}…`;
+      const variants=[
+        makeZoneCanvas(display,def.top,def.bottom,125,false),
+        makeZoneCanvas(display,def.top,def.bottom,150,false),
+        makeZoneCanvas(display,def.top,def.bottom,175,false),
+        makeZoneCanvas(display,def.top,def.bottom,150,true)
+      ];
+      let candidates=[];
+      for(const canvas of variants){
+        const rec=await recognizeNumericZone(worker,canvas);
+        const value=selectPlausibleNumber(rec.text,def.min,def.max,def.dec);
+        if(value!=='')candidates.push({value,confidence:rec.confidence,text:rec.text});
+      }
+      candidates.sort((a,b)=>b.confidence-a.confidence);
+      values[def.key]=candidates[0]?.value??'';
+      debug.push(`${def.label}: ${candidates[0]?.text?.trim()||'—'} (${Math.round(candidates[0]?.confidence||0)}%)`);
+    }
+
+    if(values.airTemp!=='')sessionAirTemp.value=values.airTemp;
+    if(values.atmosphericPressure!=='')sessionAtmosphericPressure.value=values.atmosphericPressure;
+    if(values.humidity!=='')sessionHumidity.value=values.humidity;
+    if(values.airDensity!=='')sessionAirDensity.value=values.airDensity;
+    if(values.altitude!=='')sessionAltitude.value=values.altitude;
+
+    const found=Object.values(values).filter(v=>v!=='').length;
+    status.className=found>=4?'ocr-status success':'ocr-status warning';
+    status.innerHTML=`<strong>${found>=4?'Dati rilevati: controllali prima di salvare.':'Lettura parziale: regola meglio il riquadro giallo e riprova.'}</strong>
+      <div class="ocr-result-grid">
+        <div><span>Temperatura</span>${values.airTemp!==''?values.airTemp+' °C':'Non rilevata'}</div>
+        <div><span>Pressione</span>${values.atmosphericPressure!==''?values.atmosphericPressure+' hPa':'Non rilevata'}</div>
+        <div><span>Umidità RH</span>${values.humidity!==''?values.humidity+' %':'Non rilevata'}</div>
+        <div><span>Densità aria</span>${values.airDensity!==''?values.airDensity:'Non rilevata'}</div>
+        <div><span>Altitudine</span>${values.altitude!==''?values.altitude+' m':'Non rilevata'}</div>
+      </div>
+      <details style="margin-top:9px"><summary>Dettagli lettura</summary><pre style="white-space:pre-wrap;font-size:11px;background:#fff;padding:8px;border-radius:8px">${esc(debug.join('\n'))}</pre></details>
+      <p style="margin:8px 0 0">Tutti i campi restano modificabili.</p>`;
+  }catch(err){
+    console.error(err);
+    status.className='ocr-status warning';
+    status.textContent='Lettura non riuscita. Regola il ritaglio affinché contenga soltanto il display e riprova.';
+  }finally{
+    if(worker)await worker.terminate();
+    button.disabled=false;
+  }
 }
 
 function normalizeOcrNumber(value){
@@ -694,6 +912,7 @@ function previewPrismaPhoto(event){
     const img=$('sessionPrismaPreview');
     img.src=pendingPrismaPhoto;
     img.style.display='block';
+    setTimeout(preparePrismaCrop,100);
   };
   reader.readAsDataURL(file);
 }

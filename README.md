@@ -1,11 +1,15 @@
-# Race Setup v1.10
+# Race Setup v1.11
 
-Correzione OCR Prisma:
+## OCR Prisma a zone
 
-- eliminato il sistema di ripiego che inseriva `1` in più campi;
-- ogni valore viene accettato solo se trovato vicino alla relativa etichetta;
-- applicati intervalli plausibili diversi per temperatura, pressione, RH,
+- ritaglio regolabile del solo display LCD;
+- cinque letture separate per temperatura, pressione, umidità,
   densità aria e altitudine;
-- i valori dubbi rimangono vuoti anziché essere compilati in modo errato;
-- aggiunto il testo grezzo letto dall'OCR per diagnosticare le foto difficili;
-- tutti i campi restano modificabili.
+- quattro elaborazioni grafiche diverse per ogni zona;
+- riconoscimento numerico con controlli di plausibilità;
+- nessun valore casuale inserito nei campi;
+- messaggio diagnostico con testo e affidabilità della lettura;
+- dati sempre modificabili manualmente.
+
+Per ottenere il risultato migliore, il riquadro giallo deve includere solo
+la parte LCD e non la cornice blu o i pulsanti dello strumento.
