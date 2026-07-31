@@ -1,12 +1,11 @@
-# Race Setup v1.9
+# Race Setup v1.10
 
-## Eliminazione dati
-- pulsante Elimina su ogni giornata;
-- pulsante Elimina su ogni turno;
-- conferma obbligatoria prima della cancellazione;
-- eliminando un turno vengono rimossi anche gli eventuali dati Alfano/ADA collegati;
-- eliminando una giornata vengono eliminati:
-  - tutti i turni collegati;
-  - tutte le sessioni crono collegate;
-  - tutti i file Alfano/ADA collegati;
-- il messaggio di conferma mostra quanti elementi saranno cancellati.
+Correzione OCR Prisma:
+
+- eliminato il sistema di ripiego che inseriva `1` in più campi;
+- ogni valore viene accettato solo se trovato vicino alla relativa etichetta;
+- applicati intervalli plausibili diversi per temperatura, pressione, RH,
+  densità aria e altitudine;
+- i valori dubbi rimangono vuoti anziché essere compilati in modo errato;
+- aggiunto il testo grezzo letto dall'OCR per diagnosticare le foto difficili;
+- tutti i campi restano modificabili.

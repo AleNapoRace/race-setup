@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v1.9</title>
+<title>Race Setup v1.10</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -528,67 +528,71 @@ function normalizeOcrNumber(value){
     .replace(/[Il|]/g,'1')
     .replace(/,/g,'.')
     .replace(/[^\d.\-]/g,'');
-  const parts=s.split('.');
-  if(parts.length>2)s=parts.shift()+'.'+parts.join('');
+  if(!s || s==='-' || s==='.')return '';
+  const firstDot=s.indexOf('.');
+  if(firstDot>=0)s=s.slice(0,firstDot+1)+s.slice(firstDot+1).replace(/\./g,'');
   const n=Number(s);
   return Number.isFinite(n)?n:'';
 }
 
-function findNumberNearLabel(text,labelPatterns){
-  const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+function extractNumbers(line){
+  return (String(line).match(/[-+]?\d+(?:[.,]\d+)?/g)||[])
+    .map(normalizeOcrNumber)
+    .filter(v=>v!=='');
+}
+
+function chooseByRange(values,min,max,preferredDecimals=null){
+  let candidates=values.filter(v=>v>=min&&v<=max);
+  if(!candidates.length)return '';
+  if(preferredDecimals!==null){
+    const withDecimals=candidates.filter(v=>{
+      const s=String(v);
+      return s.includes('.') && s.split('.')[1].length>=preferredDecimals;
+    });
+    if(withDecimals.length)candidates=withDecimals;
+  }
+  return candidates[0];
+}
+
+function readLabeledValue(lines,patterns,min,max,preferredDecimals=null){
   for(let i=0;i<lines.length;i++){
-    const line=lines[i];
-    if(labelPatterns.some(p=>p.test(line))){
-      const same=line.match(/[-+]?\d+(?:[.,]\d+)?/g);
-      if(same?.length)return normalizeOcrNumber(same[same.length-1]);
-      for(let j=i+1;j<=Math.min(i+2,lines.length-1);j++){
-        const next=lines[j].match(/[-+]?\d+(?:[.,]\d+)?/g);
-        if(next?.length)return normalizeOcrNumber(next[0]);
-      }
+    if(!patterns.some(p=>p.test(lines[i])))continue;
+    const same=chooseByRange(extractNumbers(lines[i]),min,max,preferredDecimals);
+    if(same!=='')return same;
+    for(let j=i+1;j<=Math.min(lines.length-1,i+2);j++){
+      const next=chooseByRange(extractNumbers(lines[j]),min,max,preferredDecimals);
+      if(next!=='')return next;
     }
   }
   return '';
 }
 
 function parsePrismaOcr(text){
-  const cleaned=text
-    .replace(/°/g,'')
-    .replace(/\s+/g,' ')
-    .replace(/AIR\s*DENSITY/ig,'AIR DENSITY');
+  const lines=String(text||'')
+    .split(/\r?\n/)
+    .map(x=>x.replace(/\s+/g,' ').trim())
+    .filter(Boolean);
 
-  let result={
-    airTemp:findNumberNearLabel(text,[/\bTEMP\b/i,/TEMPERAT/i]),
-    atmosphericPressure:findNumberNearLabel(text,[/\bPRES\b/i,/PRESS/i]),
-    humidity:findNumberNearLabel(text,[/\bRH\b/i,/HUMID/i]),
-    airDensity:findNumberNearLabel(text,[/AIR\s*DENS/i,/DENSITY/i]),
-    altitude:findNumberNearLabel(text,[/ALTITUDE/i,/\bALT\b/i])
+  // Deliberately no generic fallback: a value is accepted only when it is
+  // found close to the correct Prisma label.
+  const result={
+    airTemp:readLabeledValue(lines,[/\bTEMP\b/i,/TEMPERAT/i],-30,80),
+    atmosphericPressure:readLabeledValue(lines,[/\bPRES\b/i,/PRESS/i],700,1200),
+    humidity:readLabeledValue(lines,[/\bRH\b/i,/HUMID/i],0,100),
+    airDensity:readLabeledValue(lines,[/AIR\s*DENS/i,/DENSITY/i],0.5,1.8,2),
+    altitude:readLabeledValue(lines,[/ALTITUDE/i,/\bALT\b/i],-1000,10000)
   };
 
-  // Fallback tailored to the Prisma five-row display.
-  const nums=(text.match(/[-+]?\d+(?:[.,]\d+)?/g)||[])
-    .map(normalizeOcrNumber)
-    .filter(v=>v!=='');
-
-  const plausible={
-    airTemp:nums.find(v=>v>=-20&&v<=70),
-    atmosphericPressure:nums.find(v=>v>=800&&v<=1100),
-    humidity:nums.find(v=>v>=0&&v<=100 && v!==result.airTemp),
-    airDensity:nums.find(v=>v>=0.7&&v<=1.5),
-    altitude:nums.find(v=>v>=-500&&v<=5000 && v!==result.atmosphericPressure)
-  };
-
-  Object.keys(result).forEach(k=>{
-    if(result[k]==='')result[k]=plausible[k]??'';
+  // Prevent the same short OCR artefact (especially "1") from filling
+  // several unrelated fields.
+  const entries=Object.entries(result).filter(([,v])=>v!=='');
+  const counts={};
+  entries.forEach(([,v])=>{const k=String(v);counts[k]=(counts[k]||0)+1});
+  entries.forEach(([key,v])=>{
+    if(counts[String(v)]>1 && (v===0 || v===1))result[key]='';
   });
 
-  // Reject clearly impossible readings.
-  if(result.airTemp!=='' && (result.airTemp < -30 || result.airTemp > 80))result.airTemp='';
-  if(result.atmosphericPressure!=='' && (result.atmosphericPressure < 700 || result.atmosphericPressure > 1200))result.atmosphericPressure='';
-  if(result.humidity!=='' && (result.humidity < 0 || result.humidity > 100))result.humidity='';
-  if(result.airDensity!=='' && (result.airDensity < 0.5 || result.airDensity > 1.8))result.airDensity='';
-  if(result.altitude!=='' && (result.altitude < -1000 || result.altitude > 10000))result.altitude='';
-
-  return result;
+  return {values:result,lines};
 }
 
 async function preprocessPrismaImage(dataUrl){
@@ -648,7 +652,8 @@ async function readPrismaPhoto(){
       preserve_interword_spaces:'1'
     });
     const {data}=await worker.recognize(canvas);
-    const values=parsePrismaOcr(data.text||'');
+    const parsed=parsePrismaOcr(data.text||'');
+    const values=parsed.values;
 
     if(values.airTemp!=='')sessionAirTemp.value=values.airTemp;
     if(values.atmosphericPressure!=='')sessionAtmosphericPressure.value=values.atmosphericPressure;
@@ -658,7 +663,7 @@ async function readPrismaPhoto(){
 
     const found=Object.values(values).filter(v=>v!=='').length;
     status.className=found>=4?'ocr-status success':'ocr-status warning';
-    status.innerHTML=`<strong>${found>=4?'Dati letti dalla foto.':'Lettura parziale: controlla i valori.'}</strong>
+    status.innerHTML=`<strong>${found>=4?'Dati letti dalla foto.':'Lettura prudente: alcuni dati non sono stati inseriti.'}</strong>
       <div class="ocr-result-grid">
         <div><span>Temperatura aria</span>${values.airTemp!==''?values.airTemp+' °C':'Non rilevata'}</div>
         <div><span>Pressione</span>${values.atmosphericPressure!==''?values.atmosphericPressure+' hPa':'Non rilevata'}</div>
@@ -666,7 +671,10 @@ async function readPrismaPhoto(){
         <div><span>Densità aria</span>${values.airDensity!==''?values.airDensity:'Non rilevata'}</div>
         <div><span>Altitudine</span>${values.altitude!==''?values.altitude+' m':'Non rilevata'}</div>
       </div>
-      <p style="margin:8px 0 0">I campi restano modificabili. Verifica sempre i valori prima di salvare.</p>`;
+      <details style="margin-top:9px"><summary>Mostra testo letto dall’OCR</summary>
+        <pre style="white-space:pre-wrap;font-size:11px;background:#fff;padding:8px;border-radius:8px">${esc((data.text||'').trim()||'Nessun testo riconosciuto')}</pre>
+      </details>
+      <p style="margin:8px 0 0">I campi restano modificabili. I valori non riconosciuti non vengono più riempiti con numeri casuali.</p>`;
   }catch(error){
     console.error(error);
     status.className='ocr-status warning';
