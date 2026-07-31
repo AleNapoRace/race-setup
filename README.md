@@ -1,19 +1,12 @@
-# Race Setup v1.13
+# Race Setup v1.14
 
-## Prisma Reader automatico
-- nessun ritaglio o regolazione manuale;
-- rilevamento automatico del display LCD;
-- correzione automatica della prospettiva;
-- lettura separata delle cinque zone:
-  - temperatura;
-  - pressione;
-  - umidità;
-  - densità aria;
-  - altitudine;
-- più elaborazioni per ciascuna zona;
-- controllo degli intervalli plausibili;
-- valori sempre modificabili;
-- visualizzazione del display rilevato per controllo.
+Correzione urgente salvataggio turni:
 
-La prima lettura richiede una connessione Internet per caricare OpenCV.js
-e Tesseract.js.
+- riapertura completa di tutti i dati salvati;
+- preservati gomme, termocoperte, pressioni, temperature fine turno;
+- preservati tutti i dati forcella e mono;
+- preservati miglior giro, velocità, numero giri e note;
+- preservati ora originale, data di creazione e collegamenti Alfano/ADA;
+- modifica del turno senza cancellare campi non toccati;
+- pulsante manuale “Copia dati dal turno precedente”;
+- conferma visibile dopo il salvataggio.

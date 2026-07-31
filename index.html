@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v1.13</title>
+<title>Race Setup v1.14</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -201,7 +201,7 @@ body.chrono-locked .live-tile{
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.13 · modifica anagrafiche</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.14 · modifica anagrafiche</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -338,7 +338,9 @@ body.chrono-locked .live-tile{
 <div class="modal-body form-grid">
 
 <div class="form-section"><h3>Dati generali</h3></div>
-<div class="full"><label>Giornata *</label><select id="sessionDay" required onchange="copyPreviousSessionData()"></select></div>
+<div class="full"><label>Giornata *</label><select id="sessionDay" required onchange="copyPreviousSessionData()"></select>
+<div class="actions" style="margin-top:7px"><button type="button" class="btn btn-secondary btn-small" onclick="copyPreviousSessionData(true)">Copia dati dal turno precedente</button></div>
+</div>
 <div><label>Tipo turno</label><select id="sessionType">
 <option>Libere</option><option>Test</option><option>Qualifica</option><option>Warm-up</option><option>Gara 1</option><option>Gara 2</option>
 </select></div>
@@ -416,7 +418,7 @@ body.chrono-locked .live-tile{
 <div><label>Codice *</label><input id="tireCode" required></div><div><label>Posizione</label><select id="tirePosition"><option>Anteriore</option><option>Posteriore</option></select></div><div><label>Marca *</label><input id="tireBrand" required></div><div><label>Modello/mescola</label><input id="tireModel"></div><div><label>Misura</label><input id="tireSize"></div><div><label>Giri iniziali</label><input id="tireInitialLaps" type="number" value="0"></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
 
 <script>
-const APP_VERSION='1.13';
+const APP_VERSION='1.14';
 const APP_BUILD='2026-07-31';
 
 const KEY='raceSetup_v02';
@@ -939,7 +941,7 @@ const previousSetupFields=[
   'sagR','shockSpacer','shockCompression','shockRebound'
 ];
 
-function copyPreviousSessionData(){
+function copyPreviousSessionData(forceMessage=false){
   if(sessionModal.dataset.editId)return;
   const dayId=$('sessionDay')?.value;
   const notice=$('copiedSetupNotice');
@@ -950,7 +952,7 @@ function copyPreviousSessionData(){
     .filter(s=>s.dayId===dayId && !s.isDraft)
     .sort((a,b)=>String(b.createdAt||b.time||'').localeCompare(String(a.createdAt||a.time||'')))[0];
 
-  if(!previous)return;
+  if(!previous){if(forceMessage)alert('Non esiste ancora un turno precedente per questa giornata.');return;}
 
   previousSetupFields.forEach(field=>{
     const elementId='session'+field.charAt(0).toUpperCase()+field.slice(1);
@@ -1005,11 +1007,15 @@ function editSession(id){
  const s=get('sessions',id);if(!s)return;
  openModal('sessionModal');
  sessionModal.dataset.editId=id;
+
  sessionDay.value=s.dayId||'';
  sessionType.value=s.type||'Libere';
  sessionNumber.value=s.number||1;
+ if(sessionTimeDisplay)sessionTimeDisplay.value=s.time||'';
+
  sessionFrontGear.value=s.frontGear||'';
  sessionRearGear.value=s.rearGear||'';
+
  sessionAirTemp.value=s.airTemp||'';
  sessionAtmosphericPressure.value=s.atmosphericPressure||'';
  sessionHumidity.value=s.humidity||'';
@@ -1017,21 +1023,45 @@ function editSession(id){
  sessionAltitude.value=s.altitude||'';
  sessionWeather.value=s.weather||'Sole';
  sessionTrackTemp.value=s.trackTemp||'';
+
  sessionPilotJet.value=s.pilotJet||'';
  sessionMainJet.value=s.mainJet||'';
  sessionNeedleClip.value=s.needleClip||'';
  sessionAirScrew.value=s.airScrew||'';
+
  sessionEgtMax.value=s.egtMax||'';
  sessionEgtMin.value=s.egtMin||'';
  sessionEgtAvg.value=s.egtAvg||'';
+
  sessionTireBrand.value=s.tireBrand||'';
  sessionTireType.value=s.tireType||'';
  sessionTireCompound.value=s.tireCompound||'';
+ sessionFrontWarmerTemp.value=s.frontWarmerTemp||'';
+ sessionFrontWarmerPressure.value=s.frontWarmerPressure||'';
+ sessionRearWarmerTemp.value=s.rearWarmerTemp||'';
+ sessionRearWarmerPressure.value=s.rearWarmerPressure||'';
+ sessionFrontEndTemp.value=s.frontEndTemp||'';
+ sessionFrontEndPressure.value=s.frontEndPressure||'';
+ sessionRearEndTemp.value=s.rearEndTemp||'';
+ sessionRearEndPressure.value=s.rearEndPressure||'';
+
+ sessionForkHeight.value=s.forkHeight||'';
+ sessionSagF.value=s.sagF||'';
+ sessionForkPreload.value=s.forkPreload||'';
+ sessionForkCompression.value=s.forkCompression||'';
+ sessionForkRebound.value=s.forkRebound||'';
+
+ sessionSagR.value=s.sagR||'';
+ sessionShockSpacer.value=s.shockSpacer||'';
+ sessionShockCompression.value=s.shockCompression||'';
+ sessionShockRebound.value=s.shockRebound||'';
+
  sessionBest.value=s.officialBest||s.manualBest||'';
  sessionMaxSpeed.value=s.maxSpeed||'';
  sessionLapCount.value=s.laps||0;
  sessionDataSource.value=s.source||'Manuale';
  sessionFeedback.value=s.feedback||'';
+
  pendingPrismaPhoto=s.prismaPhoto||'';
  if(pendingPrismaPhoto){
    sessionPrismaPreview.src=pendingPrismaPhoto;
@@ -1043,13 +1073,15 @@ function saveSession(e){
   e.preventDefault();
   const now=new Date();
   const editId=sessionModal.dataset.editId||'';
+  const previousRecord=editId?get('sessions',editId):null;
   const record={
+    ...(previousRecord||{}),
     id:editId||uid(),
     dayId:sessionDay.value,
     type:sessionType.value,
     number:sessionNumber.value,
-    time:now.toTimeString().slice(0,5),
-    createdAt:now.toISOString(),
+    time:previousRecord?.time||now.toTimeString().slice(0,5),
+    createdAt:previousRecord?.createdAt||now.toISOString(),
 
     frontGear:sessionFrontGear.value,
     rearGear:sessionRearGear.value,
@@ -1096,13 +1128,13 @@ function saveSession(e){
     shockRebound:sessionShockRebound.value,
 
     manualBest:sessionBest.value,
-    officialBest:'',
+    officialBest:previousRecord?.officialBest||'',
     maxSpeed:sessionMaxSpeed.value,
     laps:Number(sessionLapCount.value||0),
     source:sessionDataSource.value,
     feedback:sessionFeedback.value,
-    changes:'',
-    adaId:editId?(get('sessions',editId)?.adaId||null):null
+    changes:previousRecord?.changes||'',
+    adaId:previousRecord?.adaId||null
   };
   if(editId){
     const idx=db.sessions.findIndex(x=>x.id===editId);
@@ -1110,6 +1142,7 @@ function saveSession(e){
   }else db.sessions.push(record);
   delete sessionModal.dataset.editId;
   save();
+  alert(editId?'Turno modificato e salvato correttamente.':'Turno salvato correttamente.');
   sessionModal.close();
   pendingPrismaPhoto='';
   resetLater(e.target);
@@ -1226,7 +1259,7 @@ function chronoSave(){
       time:new Date().toTimeString().slice(0,5),
       laps:main?.validLaps?.length||0,
       manualBest:main?.best?lapFormat(main.best):'',
-      officialBest:'',
+      officialBest:previousRecord?.officialBest||'',
       source:'Cronometro',
       frontGear:'',rearGear:'',sagF:'',sagR:'',
       tireF:'',tireR:'',feedback:'',changes:'',
