@@ -1,17 +1,19 @@
-# Race Setup v1.12
+# Race Setup v1.13
 
-## Modifiche
-- rimosso completamente l'OCR Prisma;
-- rimossi ritaglio e cursori di modifica immagine;
-- resta la possibilità di scegliere o scattare una foto Prisma;
-- dati Prisma inseriti manualmente e sempre modificabili;
-- nel nuovo turno vengono copiati dal precedente anche:
-  - temperatura aria;
-  - pressione atmosferica;
-  - umidità relativa;
+## Prisma Reader automatico
+- nessun ritaglio o regolazione manuale;
+- rilevamento automatico del display LCD;
+- correzione automatica della prospettiva;
+- lettura separata delle cinque zone:
+  - temperatura;
+  - pressione;
+  - umidità;
   - densità aria;
   - altitudine;
-  - condizioni meteo;
-- mantenuta la copia di assetto, gomme e termocoperte;
-- versione dell'app definita in un solo punto e aggiornata a v1.12;
-- titolo del browser e versione visibile aggiornati automaticamente.
+- più elaborazioni per ciascuna zona;
+- controllo degli intervalli plausibili;
+- valori sempre modificabili;
+- visualizzazione del display rilevato per controllo.
+
+La prima lettura richiede una connessione Internet per caricare OpenCV.js
+e Tesseract.js.

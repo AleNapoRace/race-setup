@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Race Setup">
-<title>Race Setup v1.12</title>
+<title>Race Setup v1.13</title>
 <style>
 :root{
   --bg:#f4f6f8;--card:#fff;--text:#15191f;--muted:#6d7680;--line:#dfe4e9;
@@ -178,15 +178,30 @@ body.chrono-locked .live-tile{
 .preview-photo{margin-top:8px;max-width:100%;border-radius:12px;border:1px solid var(--line);display:none}
 
 
+
+.prisma-reader-status{display:none;margin-top:10px;padding:11px;border:1px solid var(--line);border-radius:11px;background:#f5f7f9;font-size:13px}
+.prisma-reader-status.running{display:block;background:#eef5ff;border-color:#b9d2ff}
+.prisma-reader-status.success{display:block;background:#e8f8f1;border-color:#98dabc}
+.prisma-reader-status.warning{display:block;background:#fff6dc;border-color:#e5c66c}
+.prisma-progress{height:7px;background:#dfe4e9;border-radius:999px;overflow:hidden;margin-top:8px}
+.prisma-progress>div{height:100%;width:0;background:#111;transition:width .2s}
+.prisma-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px}
+.prisma-results>div{background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px}
+.prisma-results span{display:block;font-size:10px;color:var(--muted)}
+.prisma-debug-canvas{width:100%;margin-top:9px;border:1px solid var(--line);border-radius:9px;background:white}
+@media(max-width:700px){.prisma-results{grid-template-columns:1fr}}
+
 @media(max-width:700px){.analysis-grid{grid-template-columns:repeat(2,1fr)}}
 
 @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.chrono-setup,.name-fields{grid-template-columns:1fr}.pilot-tile{min-height:175px;padding:11px}.pilot-name{font-size:19px}.pilot-current{font-size:25px}.form-grid,.summary{grid-template-columns:1fr}.full{grid-column:auto}.app{padding-bottom:100px}table{font-size:12px}th,td{padding:7px 5px}}
 </style>
+<script src="https://docs.opencv.org/4.x/opencv.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js"></script>
 </head>
 <body>
 <div class="app">
 <header><div class="brand">
-<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.12 · modifica anagrafiche</div></div></div>
+<div class="logo"><div class="mark">RS</div><div><h1>Race Setup</h1><div class="version">v1.13 · modifica anagrafiche</div></div></div>
 <button class="btn btn-secondary btn-small" onclick="backup()">Backup</button>
 </div></header>
 
@@ -335,8 +350,11 @@ body.chrono-locked .live-tile{
 <div class="form-section"><h3>Dati meteo da Prisma</h3><p>Scatta o carica una foto e inserisci i valori letti.</p></div>
 <div class="full"><label>Foto Prisma</label>
 <input id="sessionPrismaPhoto" type="file" accept="image/*" onchange="previewPrismaPhoto(event)">
-<p class="muted" style="margin-top:6px">Puoi scegliere una foto esistente oppure scattarne una nuova. Inserisci poi manualmente i valori leggibili sul display.</p>
+<p class="muted" style="margin-top:6px">Scegli una foto esistente oppure scattane una nuova. Race Setup individua automaticamente il display.</p>
 <img id="sessionPrismaPreview" class="preview-photo" alt="Anteprima Prisma">
+<div class="actions"><button type="button" id="prismaReaderBtn" class="btn btn-blue" onclick="readPrismaAutomatically()">Leggi automaticamente i dati</button></div>
+<div id="prismaReaderStatus" class="prisma-reader-status"></div>
+<canvas id="prismaDebugCanvas" class="prisma-debug-canvas" style="display:none"></canvas>
 </div>
 <div id="copiedSetupNotice" class="full ok" style="display:none"></div>
 <div><label>Temperatura aria °C</label><input id="sessionAirTemp" type="number" step="0.1"></div>
@@ -398,7 +416,7 @@ body.chrono-locked .live-tile{
 <div><label>Codice *</label><input id="tireCode" required></div><div><label>Posizione</label><select id="tirePosition"><option>Anteriore</option><option>Posteriore</option></select></div><div><label>Marca *</label><input id="tireBrand" required></div><div><label>Modello/mescola</label><input id="tireModel"></div><div><label>Misura</label><input id="tireSize"></div><div><label>Giri iniziali</label><input id="tireInitialLaps" type="number" value="0"></div><div class="full actions"><button class="btn btn-primary">Salva</button></div></div></form></dialog>
 
 <script>
-const APP_VERSION='1.12';
+const APP_VERSION='1.13';
 const APP_BUILD='2026-07-31';
 
 const KEY='raceSetup_v02';
@@ -456,6 +474,10 @@ function openModal(id){
     if(img){img.src='';img.style.display='none'}
     const notice=$('copiedSetupNotice');
     if(notice)notice.style.display='none';
+    const readerStatus=$('prismaReaderStatus');
+    if(readerStatus){readerStatus.className='prisma-reader-status';readerStatus.innerHTML='';}
+    const debug=$('prismaDebugCanvas');
+    if(debug)debug.style.display='none';
   }
   if(dialog && !dialog.open)dialog.showModal();
 }
@@ -506,6 +528,271 @@ function setAutomaticSessionTime(){
   if($('sessionTimeDisplay'))$('sessionTimeDisplay').value=now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
 }
 
+
+
+function waitForOpenCv(timeoutMs=12000){
+  return new Promise((resolve,reject)=>{
+    const start=Date.now();
+    const check=()=>{
+      if(window.cv && cv.Mat) return resolve();
+      if(Date.now()-start>timeoutMs) return reject(new Error('OpenCV non disponibile'));
+      setTimeout(check,150);
+    };
+    check();
+  });
+}
+
+function loadImageDataUrl(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=reject;
+    img.src=dataUrl;
+  });
+}
+
+function orderQuad(points){
+  const pts=points.map(p=>({x:p.x,y:p.y}));
+  const sum=p=>p.x+p.y, diff=p=>p.x-p.y;
+  return [
+    pts.reduce((a,b)=>sum(a)<sum(b)?a:b),
+    pts.reduce((a,b)=>diff(a)>diff(b)?a:b),
+    pts.reduce((a,b)=>sum(a)>sum(b)?a:b),
+    pts.reduce((a,b)=>diff(a)<diff(b)?a:b)
+  ];
+}
+
+function findDisplayQuad(src){
+  const gray=new cv.Mat(), blur=new cv.Mat(), edges=new cv.Mat();
+  cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+  cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
+  cv.Canny(blur,edges,45,140);
+
+  const contours=new cv.MatVector(), hierarchy=new cv.Mat();
+  cv.findContours(edges,contours,hierarchy,cv.RETR_LIST,cv.CHAIN_APPROX_SIMPLE);
+
+  let best=null, bestScore=-1;
+  const imageArea=src.cols*src.rows;
+
+  for(let i=0;i<contours.size();i++){
+    const cnt=contours.get(i);
+    const area=Math.abs(cv.contourArea(cnt));
+    if(area<imageArea*.08){cnt.delete();continue}
+    const peri=cv.arcLength(cnt,true);
+    const approx=new cv.Mat();
+    cv.approxPolyDP(cnt,approx,.025*peri,true);
+    const rect=cv.boundingRect(approx);
+    const ratio=rect.width/rect.height;
+    const centerX=rect.x+rect.width/2, centerY=rect.y+rect.height/2;
+    const centrality=1-(Math.abs(centerX-src.cols/2)/src.cols+Math.abs(centerY-src.rows/2)/src.rows);
+    const ratioScore=1-Math.min(1,Math.abs(ratio-1.05));
+    const areaScore=area/imageArea;
+    const quadBonus=approx.rows===4?1:.25;
+    const score=areaScore*5+centrality+ratioScore+quadBonus;
+
+    if(ratio>.65 && ratio<1.5 && score>bestScore){
+      let points=[];
+      if(approx.rows===4){
+        for(let r=0;r<4;r++)points.push({x:approx.intPtr(r,0)[0],y:approx.intPtr(r,0)[1]});
+      }else{
+        points=[
+          {x:rect.x,y:rect.y},
+          {x:rect.x+rect.width,y:rect.y},
+          {x:rect.x+rect.width,y:rect.y+rect.height},
+          {x:rect.x,y:rect.y+rect.height}
+        ];
+      }
+      best={points,rect};
+      bestScore=score;
+    }
+    approx.delete();cnt.delete();
+  }
+
+  contours.delete();hierarchy.delete();gray.delete();blur.delete();edges.delete();
+
+  if(best)return orderQuad(best.points);
+
+  // Fallback automatic central area for full-device photos.
+  return orderQuad([
+    {x:src.cols*.18,y:src.rows*.17},
+    {x:src.cols*.82,y:src.rows*.17},
+    {x:src.cols*.82,y:src.rows*.72},
+    {x:src.cols*.18,y:src.rows*.72}
+  ]);
+}
+
+function warpDisplay(src,quad){
+  const ordered=orderQuad(quad);
+  const width=1200,height=1080;
+  const srcPts=cv.matFromArray(4,1,cv.CV_32FC2,[
+    ordered[0].x,ordered[0].y,
+    ordered[1].x,ordered[1].y,
+    ordered[2].x,ordered[2].y,
+    ordered[3].x,ordered[3].y
+  ]);
+  const dstPts=cv.matFromArray(4,1,cv.CV_32FC2,[0,0,width,0,width,height,0,height]);
+  const matrix=cv.getPerspectiveTransform(srcPts,dstPts);
+  const dst=new cv.Mat();
+  cv.warpPerspective(src,dst,matrix,new cv.Size(width,height),cv.INTER_CUBIC,cv.BORDER_REPLICATE,new cv.Scalar());
+  srcPts.delete();dstPts.delete();matrix.delete();
+  return dst;
+}
+
+function cropCvZone(display,x1,y1,x2,y2){
+  const rect=new cv.Rect(
+    Math.round(display.cols*x1),
+    Math.round(display.rows*y1),
+    Math.max(10,Math.round(display.cols*(x2-x1))),
+    Math.max(10,Math.round(display.rows*(y2-y1)))
+  );
+  return display.roi(rect).clone();
+}
+
+function cvMatToCanvas(mat,mode=0){
+  const gray=new cv.Mat(), resized=new cv.Mat(), out=new cv.Mat();
+  cv.cvtColor(mat,gray,cv.COLOR_RGBA2GRAY);
+  cv.resize(gray,resized,new cv.Size(gray.cols*2,gray.rows*2),0,0,cv.INTER_CUBIC);
+
+  if(mode===0)cv.adaptiveThreshold(resized,out,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,31,7);
+  if(mode===1)cv.threshold(resized,out,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU);
+  if(mode===2){
+    cv.adaptiveThreshold(resized,out,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY_INV,31,5);
+  }
+
+  const canvas=document.createElement('canvas');
+  cv.imshow(canvas,out);
+  gray.delete();resized.delete();out.delete();
+  return canvas;
+}
+
+function parseNumericText(text,min,max,preferredDecimals=1){
+  const normalized=String(text||'')
+    .replace(/[Oo]/g,'0')
+    .replace(/[Il|]/g,'1')
+    .replace(/,/g,'.');
+  let matches=normalized.match(/[-+]?\d+(?:\.\d+)?/g)||[];
+  let candidates=matches.map(Number).filter(v=>Number.isFinite(v)&&v>=min&&v<=max);
+  if(!candidates.length)return '';
+  const preferred=candidates.filter(v=>{
+    const s=String(v);
+    return s.includes('.') && s.split('.')[1].length>=preferredDecimals;
+  });
+  return (preferred[0]??candidates[0]);
+}
+
+async function recognizeZone(worker,mat,range){
+  const attempts=[];
+  for(const mode of [0,1,2]){
+    const canvas=cvMatToCanvas(mat,mode);
+    for(const psm of [7,6,13]){
+      await worker.setParameters({
+        tessedit_pageseg_mode:String(psm),
+        tessedit_char_whitelist:'0123456789.,-'
+      });
+      const {data}=await worker.recognize(canvas);
+      const value=parseNumericText(data.text,range.min,range.max,range.dec);
+      if(value!=='')attempts.push({value,confidence:Number(data.confidence||0),text:data.text||''});
+    }
+  }
+  attempts.sort((a,b)=>b.confidence-a.confidence);
+  return attempts[0]||{value:'',confidence:0,text:''};
+}
+
+async function readPrismaAutomatically(){
+  const status=$('prismaReaderStatus');
+  const button=$('prismaReaderBtn');
+
+  if(!pendingPrismaPhoto){
+    status.className='prisma-reader-status warning';
+    status.textContent='Prima scegli o scatta una foto del Prisma.';
+    return;
+  }
+
+  if(typeof Tesseract==='undefined'){
+    status.className='prisma-reader-status warning';
+    status.textContent='Il motore OCR non è disponibile. Controlla Internet e aggiorna la pagina.';
+    return;
+  }
+
+  button.disabled=true;
+  status.className='prisma-reader-status running';
+  status.innerHTML='Individuazione automatica del display…<div class="prisma-progress"><div id="prismaProgressBar"></div></div>';
+
+  let worker,src,display;
+  try{
+    await waitForOpenCv();
+    const img=await loadImageDataUrl(pendingPrismaPhoto);
+    const tempCanvas=document.createElement('canvas');
+    tempCanvas.width=img.naturalWidth;
+    tempCanvas.height=img.naturalHeight;
+    tempCanvas.getContext('2d').drawImage(img,0,0);
+    src=cv.imread(tempCanvas);
+
+    const quad=findDisplayQuad(src);
+    display=warpDisplay(src,quad);
+
+    // Visual debug: automatically detected/rectified LCD.
+    const debug=$('prismaDebugCanvas');
+    cv.imshow(debug,display);
+    debug.style.display='block';
+
+    const zones=[
+      {key:'airTemp',label:'Temperatura',box:[.54,.015,.91,.18],min:-30,max:80,dec:1},
+      {key:'atmosphericPressure',label:'Pressione',box:[.12,.30,.62,.50],min:700,max:1200,dec:1},
+      {key:'humidity',label:'Umidità',box:[.68,.30,.97,.50],min:0,max:100,dec:1},
+      {key:'airDensity',label:'Densità aria',box:[.12,.50,.60,.69],min:.5,max:1.8,dec:2},
+      {key:'altitude',label:'Altitudine',box:[.28,.69,.82,.87],min:-1000,max:10000,dec:1}
+    ];
+
+    worker=await Tesseract.createWorker('eng',1,{
+      logger:m=>{
+        if(m.status==='recognizing text'){
+          const bar=$('prismaProgressBar');
+          if(bar)bar.style.width=Math.round((m.progress||0)*100)+'%';
+        }
+      }
+    });
+
+    const values={},details=[];
+    for(let i=0;i<zones.length;i++){
+      const z=zones[i];
+      status.firstChild.textContent=`Lettura ${z.label}…`;
+      const mat=cropCvZone(display,...z.box);
+      const rec=await recognizeZone(worker,mat,z);
+      values[z.key]=rec.value;
+      details.push(`${z.label}: "${rec.text.trim()||'—'}" · affidabilità ${Math.round(rec.confidence)}%`);
+      mat.delete();
+    }
+
+    if(values.airTemp!=='')sessionAirTemp.value=values.airTemp;
+    if(values.atmosphericPressure!=='')sessionAtmosphericPressure.value=values.atmosphericPressure;
+    if(values.humidity!=='')sessionHumidity.value=values.humidity;
+    if(values.airDensity!=='')sessionAirDensity.value=values.airDensity;
+    if(values.altitude!=='')sessionAltitude.value=values.altitude;
+
+    const found=Object.values(values).filter(v=>v!=='').length;
+    status.className=found>=4?'prisma-reader-status success':'prisma-reader-status warning';
+    status.innerHTML=`<strong>${found>=4?'Lettura completata: controlla i valori.':'Lettura parziale: alcuni dati non sono stati riconosciuti.'}</strong>
+      <div class="prisma-results">
+        <div><span>Temperatura</span>${values.airTemp!==''?values.airTemp+' °C':'Non rilevata'}</div>
+        <div><span>Pressione</span>${values.atmosphericPressure!==''?values.atmosphericPressure+' hPa':'Non rilevata'}</div>
+        <div><span>Umidità RH</span>${values.humidity!==''?values.humidity+' %':'Non rilevata'}</div>
+        <div><span>Densità aria</span>${values.airDensity!==''?values.airDensity:'Non rilevata'}</div>
+        <div><span>Altitudine</span>${values.altitude!==''?values.altitude+' m':'Non rilevata'}</div>
+      </div>
+      <details style="margin-top:9px"><summary>Dettagli tecnici</summary><pre style="white-space:pre-wrap;font-size:11px;background:#fff;padding:8px;border-radius:8px">${esc(details.join('\n'))}</pre></details>
+      <p style="margin:8px 0 0">I dati sono sempre modificabili prima del salvataggio.</p>`;
+  }catch(err){
+    console.error(err);
+    status.className='prisma-reader-status warning';
+    status.textContent='Non sono riuscito a individuare o leggere il display. Prova con una foto più frontale e senza tagliare i bordi del display.';
+  }finally{
+    if(worker)await worker.terminate();
+    if(src)src.delete();
+    if(display)display.delete();
+    button.disabled=false;
+  }
+}
 
 function previewPrismaPhoto(event){
   const file=event.target.files?.[0];
